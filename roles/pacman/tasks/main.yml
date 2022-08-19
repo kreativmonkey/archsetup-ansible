@@ -1,0 +1,6 @@
+---
+- name: Configure pacman
+  ansible.builtin.include_tasks: pacmanconf.yml
+
+- name: Setup pacman helpers
+  ansible.builtin.include_tasks: pacmanhelper.yml

@@ -1,0 +1,56 @@
+---
+- name: Installing rootless dependencies
+  ansible.builtin.package:
+    name: "{{ _podman_rootless_dependencies }}"
+    state: present
+  loop_control:
+    loop_var: _podman_rootless_dependencies
+  loop:
+    - fuse-overlayfs
+    - slirp4netns
+
+- name: Enable kernel.unprivileged_userns_clone
+  ansible.posix.sysctl:
+    name: kernel.unprivileged_userns_clone
+    value: '1'
+    state: present
+    sysctl_set: true
+
+- name: Creating subuid und subgid files
+  ansible.builtin.copy:
+    content: ""
+    dest: "{{ _podman_rootless_files }}"
+    force: false
+    group: root
+    owner: root
+    mode: '0644'
+  loop_control:
+    loop_var: _podman_rootless_files
+  loop:
+    - /etc/subuid
+    - /etc/subgid
+
+- name: Adding subuids for privileged users
+  ansible.builtin.lineinfile:
+    path: /etc/subuid
+    line: '{{_podman_rootless_user}}:100000:65535'
+    regexp: '^{{_podman_rootless_user }}:\d*:\d*$'
+  register: podman_subuid
+  loop_control:
+    loop_var: _podman_rootless_user
+  loop: '{{ podman_rootless_users }}'
+
+- name: Adding subgids for privileged users
+  ansible.builtin.lineinfile:
+    path: /etc/subgid
+    line: '{{_podman_rootless_user}}:100000:65535'
+    regexp: '^{{_podman_rootless_user}}:\d*:\d*$'
+  register: podman_subgid
+  loop_control:
+    loop_var: _podman_rootless_user
+  loop: '{{ podman_rootless_users }}'
+
+- name: Propagate changes to subuid and subgid
+  ansible.builtin.command:
+    cmd: 'podman system migrate'
+  when: podman_subuid.changed or podman_subgid.changed

@@ -1,0 +1,16 @@
+---
+- name: Make sure docker service is not running
+  ansible.builtin.service:
+    name: docker
+    state: stopped
+
+- name: Uninstall docker
+  ansible.builtin.package:
+    name: docker
+    state: absent
+
+- name: Replace docker command by podman 
+  ansible.builtin.package:
+    name: podman-docker
+    state: present
+

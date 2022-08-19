@@ -1,0 +1,9 @@
+---
+# defaults file for pacman
+pacman:
+  parallel_downloads: 10
+  repos:
+    - core
+    - extra
+    - community
+    - multilib

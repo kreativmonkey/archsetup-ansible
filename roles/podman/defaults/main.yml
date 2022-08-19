@@ -1,0 +1,4 @@
+---
+# defaults file for podman
+podman_replace_docker: false
+podman_rootless: true

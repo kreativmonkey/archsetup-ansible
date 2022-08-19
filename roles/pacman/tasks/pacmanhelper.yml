@@ -1,0 +1,19 @@
+---
+- name: Create service to remove unused cached package files weekly
+  ansible.builtin.copy:
+    dest: '/etc/systemd/system/{{ _pacman_service }}'
+    src: './files/{{ _pacman_service }}'
+    owner: root
+    group: root
+    mode: '0644'
+  loop_control:
+    loop_var: _pacman_service
+  loop:
+    - paccache.service
+    - paccache.timer
+
+- name: Enable service to remove unused cached packages file weekly
+  ansible.builtin.service:
+    name: paccache.timer
+    state: started
+    enabled: true

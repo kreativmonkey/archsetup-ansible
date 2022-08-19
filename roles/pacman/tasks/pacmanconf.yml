@@ -1,0 +1,35 @@
+---
+- name: Enable colourised pacman output and verbose package lists
+  ansible.builtin.lineinfile:
+    path: /etc/pacman.conf
+    line: Color
+    regexp: 'Color$'
+    state: present
+  loop_control:
+    loop_var: _pacman_colorized
+  loop:
+    - { regexp: 'Color$', line: 'Color'}
+    - { regexp: 'ILoveCandy$', line: 'ILoveCandy'}
+
+- name: Enable verbose package list
+  ansible.builtin.lineinfile:
+    path: /etc/pacman.conf
+    line: VerbosePkgLists
+    regexp: 'VerbosePkgLists$'
+    state: present
+
+- name: Enable parallel Downloads
+  ansible.builtin.lineinfile:
+    path: /etc/pacman.conf
+    line: 'ParallelDownloads = {{ pacman.parallel_downloads }}'
+    regexp: 'ParallelDownloads\s*=\s*\d*'
+    insertafter: '^# Misc options'
+
+- name: Enable repositories
+  ansible.builtin.replace:
+    path: /etc/pacman.conf
+    regexp: '^#\[{{ item }}\]$\n^#Include\s+=\s+/etc/pacman.d/mirrorlist$'
+    replace: '[{{ item }}]\nInclude = /etc/pacman.d/mirrorlist'
+  with_items: '{{ pacman.repos }}'
+  notify: Update pacman cache
+  when: pacman.repos is defined
