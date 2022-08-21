@@ -30,27 +30,26 @@
     - /etc/subuid
     - /etc/subgid
 
-- name: Adding subuids for privileged users
+- name: Adding subuids and subgid for privileged users
   ansible.builtin.lineinfile:
-    path: /etc/subuid
-    line: '{{_podman_rootless_user}}:100000:65535'
+    path: >-
+      {{ lookup('vars'), ansible_loop_var[1] }}
+    line: >-
+      {{ lookup('vars'), ansible_loop_var[0] }}:100000:65535
     regexp: '^{{_podman_rootless_user }}:\d*:\d*$'
-  register: podman_subuid
+  register: podman_set_privileged
   loop_control:
-    loop_var: _podman_rootless_user
-  loop: '{{ podman_rootless_users }}'
-
-- name: Adding subgids for privileged users
-  ansible.builtin.lineinfile:
-    path: /etc/subgid
-    line: '{{_podman_rootless_user}}:100000:65535'
-    regexp: '^{{_podman_rootless_user}}:\d*:\d*$'
-  register: podman_subgid
-  loop_control:
-    loop_var: _podman_rootless_user
-  loop: '{{ podman_rootless_users }}'
+    loop_var: _podman_rootless
+  loop: >-
+    {{ _podman_rootless_user | product( _podman_rootless_file ) }}
+  vars:
+    _podman_rootless_user: >-
+      {{ podman_rootless_users }}
+    _podman_rootless_file:
+      - /etc/subuid
+      - /etc/subgid
 
 - name: Propagate changes to subuid and subgid
   ansible.builtin.command:
     cmd: 'podman system migrate'
-  when: podman_subuid.changed or podman_subgid.changed
+  when: podman_set_privileged.changed
