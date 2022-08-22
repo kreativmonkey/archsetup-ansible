@@ -32,16 +32,14 @@
 
 - name: Adding subuids and subgid for privileged users
   ansible.builtin.lineinfile:
-    path: >-
-      {{ lookup('vars'), ansible_loop_var[1] }}
-    line: >-
-      {{ lookup('vars'), ansible_loop_var[0] }}:100000:65535
+    path: "{{ _podman_rootless[0] }}"
+    line: "{{ _podman_rootless[1] }}:100000:65535"
     regexp: '^{{_podman_rootless_user }}:\d*:\d*$'
   register: podman_set_privileged
   loop_control:
     loop_var: _podman_rootless
   loop: >-
-    {{ _podman_rootless_user | product( _podman_rootless_file ) }}
+    {{ _podman_rootless_file | product( _podman_rootless_user ) }}
   vars:
     _podman_rootless_user: >-
       {{ podman_rootless_users }}
