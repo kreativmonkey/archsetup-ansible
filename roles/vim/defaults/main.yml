@@ -1,5 +1,0 @@
----
-# defaults file for vim
-vim:
-  pkgs: vim
-  default: true
