@@ -1,0 +1,46 @@
+---
+# tasks file for vim
+- name: Installing vim package
+  ansible.builtin.package:
+    name: "{{ vim.pkgs }}"
+    state: present
+
+- name: Ensure vim is default editor
+  block:
+  - name: Get files expose EDITOR env
+    ansible.builtin.find:
+      paths: /etc
+      contains: '(export\s*)?EDITOR=[^vim][\w]*'
+      recurse: true
+    register: search_editor_env
+    failed_when: >-
+      search_editor_env.matched != 1 and  
+      (search_editor_env.files | selectattr('path', 'equalto', '/etc/environment'))
+
+  - name: Check if vim is already set to default
+    ansible.builtin.lineinfile:
+      path: /etc/environment
+      line: "EDITOR=vim"
+      state: present
+    check_mode: true
+    register: check_env
+    failed_when: >-
+      (check_env is changed) or (check_env is failed)
+
+  rescue:
+  - name: Remove EDITOR from all files
+    ansible.builtin.lineinfile:
+      path: "{{ _found_editor_files.path }}"
+      regexp: '(export\s*)?EDITOR=\w*'
+      state: absent
+    loop_control:
+      loop_var: _found_editor_files
+    loop: "{{ search_editor_env.files }}"
+
+  - name: Setup vim as default editor
+    ansible.builtin.lineinfile:
+      path: /etc/environment
+      line: 'EDITOR=vim'
+      regexp: '^EDITOR='
+
+  when: vim.default
