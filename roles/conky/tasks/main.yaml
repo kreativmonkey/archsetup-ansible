@@ -1,0 +1,32 @@
+---
+- name: Installing Conky
+  ansible.builtin.package:
+    name: conky
+    state: present
+
+- name: Create config folder
+  ansible.builtin.file:
+    path: /etc/conky
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Create config for Conky
+  ansible.builtin.template:
+    src: templates/conkyconfig.j2
+    dest: /etc/conky/conky.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Start conky on boot
+  ansible.builtin.copy:
+    src: files/conky.desktop
+    dest: "/home/{{ _conky_user }}/.config/autostart/conky.desktop"
+    owner: "{{ _conky_user }}"
+    group: "{{ _conky_user }}"
+    mode: '0644'
+  loop_control:
+    loop_var: _conky_user
+  loop: "{{ system_users }}"
