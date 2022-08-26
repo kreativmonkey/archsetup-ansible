@@ -3,10 +3,10 @@
 conky.config = {
     alignment = 'top_right',
     background = false,
-    cpu_avg_samples = 2,
+    cpu_avg_samples = 4,
     default_color = 'white',
-    default_outline_color = 'd9d7d6',
-    default_shade_color = '000000',
+    default_outline_color = 'grey',
+    default_shade_color = 'black',
     double_buffer = true,
     draw_borders = false,
     draw_graph_borders = false,
@@ -43,19 +43,41 @@ conky.config = {
 }
 
 conky.text = [[
-${color2}CPU ${color2}${cpubar cpu0}
-${color2}RAM ${color2}${membar}
+$color${font}${font Open Sans:size=44}$alignr${time %H:%M}$font$color${font Open Sans:size=15}
+$alignr${time %a}, ${time %d %b %Y}$font$color  
 
-${color2}SYSTEM ${color2}${hr 2}
-${color1}$sysname $kernel $alignr $machine
+# NAME                                                                        
+${font Open Sans:Bold:size=16}${color 4C7523} SEBASTIAN     
+
+# System
+${font Open Sans:Bold:size=10}${color 4C7523}SYSTEM ${hr 2}$color${font}${offset 1}
+Kernel:alignr$kernel 
+Machine:$alignr$machine
 Host:$alignr$nodename
 Uptime:$alignr$uptime
 
-${color grey}File systems:$alignr $color${fs_used /}/${fs_size /} 
-${color grey}${fs_bar 6 /}
- 
- ${color grey}Networking:
-Up:$color ${upspeed} ${color grey} - Down:$color ${downspeed}
+# AMD-Ryzen 7 PRO 4650G                                                       
+${font Open Sans:Bold:size=10}${color 4C7523}PROCESSOR ${hr 2}$color${font}${offset 1}
+$color${font}${color2}CPU ${color2}${cpubar cpu0}  
+$alignr $cpu %   
+${color2}RAM ${color2}${membar}
+$alignr$mem/$memmax                           
+Temperature $alignr ${exec sensors k10temp-pci-00c3 | grep 'Tdie' | cut -c16-19}°C
+
+# PROCESSES                                                                   
+${font Open Sans:Bold:size=10}${color 4C7523}PROCESSES ${hr 2}$color${font}${offset 1}
+$color${font Open Sans:bold:size=8}CPU$font                                   
+${offset 15}${font Noto sans:size=8}${color EDE0FF}Name               ${alignr}PID   CPU%   MEM%
+${offset 15}${color FF7878}${top name 1} ${alignr}${top pid 1} ${top cpu 1} ${top mem 1}
+${offset 15}${color FF7878}${top name 2} ${alignr}${top pid 2} ${top cpu 2} ${top mem 2}
+${offset 15}${color FF7878}${top name 3} ${alignr}${top pid 3} ${top cpu 3} ${top mem 3}
+${offset 15}${color FF7878}${top name 4} ${alignr}${top pid 4} ${top cpu 4} ${top mem 4}
+
+# SSD intel M.2 2280 1TB                                                      
+${font Open Sans:Bold:size=10}${color 4C7523}SSD-Intel-M.2-2280-1TB ${hr 2}$color${font}${offset 1}
+${offset 4}${color FFFDE2}home (${fs_type /home}) $alignr ${fs_used /home/}/${fs_size /home/}
+${fs_bar 6 /home/}
+
 ${color2}KEYBOARD SHORTCUTS${color2}${hr 2}${color1}
 Super+Space$alignr Change Tastaturlayout
 Super+r$alignr Take screenshot
