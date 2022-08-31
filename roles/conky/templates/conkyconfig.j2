@@ -51,22 +51,21 @@ ${font Open Sans:Bold:size=16}${color 4C7523} SEBASTIAN
 
 # System
 ${font Open Sans:Bold:size=10}${color 4C7523}SYSTEM ${hr 2}$color${font}${offset 1}
-Kernel:alignr$kernel 
+Kernel:$alignr$kernel 
 Machine:$alignr$machine
 Host:$alignr$nodename
 Uptime:$alignr$uptime
 
 # AMD-Ryzen 7 PRO 4650G                                                       
 ${font Open Sans:Bold:size=10}${color 4C7523}PROCESSOR ${hr 2}$color${font}${offset 1}
-$color${font}${color2}CPU ${color2}${cpubar cpu0}  
-$alignr $cpu %   
-${color2}RAM ${color2}${membar}
-$alignr$mem/$memmax                           
+$color${font}CPU $alignr $cpu %   
+${cpubar cpu0}  
+RAM $alignr ${mem}/${memmax}                          
+${membar}
 Temperature $alignr ${exec sensors k10temp-pci-00c3 | grep 'Tdie' | cut -c16-19}°C
 
 # PROCESSES                                                                   
 ${font Open Sans:Bold:size=10}${color 4C7523}PROCESSES ${hr 2}$color${font}${offset 1}
-$color${font Open Sans:bold:size=8}CPU$font                                   
 ${offset 15}${font Noto sans:size=8}${color EDE0FF}Name               ${alignr}PID   CPU%   MEM%
 ${offset 15}${color FF7878}${top name 1} ${alignr}${top pid 1} ${top cpu 1} ${top mem 1}
 ${offset 15}${color FF7878}${top name 2} ${alignr}${top pid 2} ${top cpu 2} ${top mem 2}
