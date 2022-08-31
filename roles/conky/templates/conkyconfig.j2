@@ -52,32 +52,36 @@ ${font Open Sans:Bold:size=16}${color 4C7523} SEBASTIAN
 # System
 ${font Open Sans:Bold:size=10}${color 4C7523}SYSTEM ${hr 2}$color${font}${offset 1}
 Kernel:$alignr$kernel 
-Machine:$alignr$machine
+Arch:$alignr$machine
 Host:$alignr$nodename
 Uptime:$alignr$uptime
 
-# AMD-Ryzen 7 PRO 4650G                                                       
-${font Open Sans:Bold:size=10}${color 4C7523}PROCESSOR ${hr 2}$color${font}${offset 1}
-$color${font}CPU $alignr $cpu %   
-${cpubar cpu0}  
-RAM $alignr ${mem}/${memmax}                          
-${membar}
-Temperature $alignr ${exec sensors k10temp-pci-00c3 | grep 'Tdie' | cut -c16-19}°C
+Available updates:$alignr${execpi 3600 checkupdates | awk 'END { print (NR == 0 ? "System up to date" : NR " pkg" (NR > 1 ? "s" : "")); }'}
 
-# PROCESSES                                                                   
-${font Open Sans:Bold:size=10}${color 4C7523}PROCESSES ${hr 2}$color${font}${offset 1}
-${offset 15}${font Noto sans:size=8}${color EDE0FF}Name               ${alignr}PID   CPU%   MEM%
-${offset 15}${color FF7878}${top name 1} ${alignr}${top pid 1} ${top cpu 1} ${top mem 1}
-${offset 15}${color FF7878}${top name 2} ${alignr}${top pid 2} ${top cpu 2} ${top mem 2}
-${offset 15}${color FF7878}${top name 3} ${alignr}${top pid 3} ${top cpu 3} ${top mem 3}
-${offset 15}${color FF7878}${top name 4} ${alignr}${top pid 4} ${top cpu 4} ${top mem 4}
+# Performance                                                    
+${font Open Sans:Bold:size=10}${color 4C7523}PERFORMANCE ${hr 2}$color${font}${offset 1}
+$color${font}CPU ${alignr} ${cpu} %   
+${cpubar cpu0}
+${color FF7878}${top name 1} ${alignr}${top pid 1} ${top cpu 1}%
+${color FF7878}${top name 2} ${alignr}${top pid 2} ${top cpu 2}%
+${color FF7878}${top name 3} ${alignr}${top pid 3} ${top cpu 3}%
+${color FF7878}${top name 4} ${alignr}${top pid 4} ${top cpu 4}%
+
+$color${font}RAM ${alignr}${mem}/${memmax}                          
+${membar}
+${color FF7878}${top_mem name 1} ${alignr}${top_mem pid 1} ${top_mem mem_res 1}
+${color FF7878}${top_mem name 2} ${alignr}${top_mem pid 2} ${top_mem mem_res 2}
+${color FF7878}${top_mem name 3} ${alignr}${top_mem pid 3} ${top_mem mem_res 3}
+${color FF7878}${top_mem name 4} ${alignr}${top_mem pid 4} ${top_mem mem_res 4}
+
+$color${font}Temperature $alignr ${exec sensors k10temp-pci-00c3 | grep 'Tdie' | cut -c16-19}°C
 
 # SSD intel M.2 2280 1TB                                                      
 ${font Open Sans:Bold:size=10}${color 4C7523}SSD-Intel-M.2-2280-1TB ${hr 2}$color${font}${offset 1}
-${offset 4}${color FFFDE2}home (${fs_type /home}) $alignr ${fs_used /home/}/${fs_size /home/}
+${color}home (${fs_type /home}) $alignr ${fs_used /home/}/${fs_size /home/}
 ${fs_bar 6 /home/}
 
-${color2}KEYBOARD SHORTCUTS${color2}${hr 2}${color1}
+${font Open Sans:Bold:size=10}${color 4C7523}KEYBOARD SHORTCUTS ${hr 2}${color}${font}${offset 1}
 Super+Space$alignr Change Tastaturlayout
 Super+r$alignr Take screenshot
 ]]
