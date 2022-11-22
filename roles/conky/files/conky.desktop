@@ -4,3 +4,5 @@ Name=conky
 Exec=conky --daemonize --pause=5
 StartupNotify=false
 Terminal=false
+Categories=Gnome;GTK;Utility
+X-GNOME-Autostart-Delay=10
