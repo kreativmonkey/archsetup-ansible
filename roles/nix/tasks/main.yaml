@@ -1,0 +1,26 @@
+---
+- name: Install nix package manager
+  ansible.builtin.packages:
+    name: nix
+    state: present
+
+- name: Start and enable nix deamon
+  ansible.builtin.systemd:
+    name: nix-deamon
+    state: started
+    enable: true
+
+- name: Add users to the nix-users Group
+  ansible.builtin.user:
+    name: "{{ _nix_user }}"
+    group: nix-users
+    append: true
+  loop_control:
+    loop_var: _nix_user
+  loop: "{{ system_users }}"
+
+- name: Setup Max Jobs to auto
+  ansible.builtin.lineinfile:
+    path: /etc/nix/nix.conf
+    regexp: "^max-jobs(.*)?=(.*)?"
+    line: max-jobs = auto
