@@ -1,5 +1,4 @@
 ---
-
 - name: Installing obs and dependencies
   ansible.builtin.package:
     name: "{{ _obs_studio }}"
