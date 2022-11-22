@@ -2,7 +2,10 @@
 - hosts: localhost
   become: true
   roles:
+    - common
     - podman
     - pacman
     - editor
     - conky
+    - obs-studio
+    - nix
