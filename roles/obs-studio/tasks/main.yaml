@@ -1,0 +1,22 @@
+---
+
+- name: Installing obs and dependencies
+  ansible.builtin.package:
+    name: "{{ _obs_studio }}"
+    state: present
+  loop_control:
+    loop_var: _obs_studio
+  loop:
+    - obs-studio
+    - qt5-wayland
+    - qt6-wayland
+    - v4l2loopback-dkms
+
+- name: Add user to video group for virtual Camera support
+  ansible.builtin.user:
+    name: "{{ _system_users }}"
+    groups: video
+    append: yes
+  loop_control:
+    loop_var: _system_users
+  loop: "{{ system_users }}"
