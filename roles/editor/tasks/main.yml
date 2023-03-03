@@ -5,7 +5,7 @@
     name: "{{ default_editor }}"
     state: present
 
-- name: Ensure vim is default editor
+- name: Ensure default editor is set
   block:
   - name: Get files expose EDITOR env
     ansible.builtin.find:
@@ -17,7 +17,7 @@
       search_editor_env.matched != 1 and  
       (search_editor_env.files | selectattr('path', 'equalto', '/etc/environment'))
 
-  - name: Check if vim is already set to default
+  - name: Check if Editor is already set to default
     ansible.builtin.lineinfile:
       path: /etc/environment
       line: 'EDITOR={{default_editor}}'
@@ -37,7 +37,7 @@
       loop_var: _found_editor_files
     loop: "{{ search_editor_env.files }}"
 
-  - name: Setup vim as default editor
+  - name: Setup default editor
     ansible.builtin.lineinfile:
       path: /etc/environment
       line: 'EDITOR={{default_editor}}'
