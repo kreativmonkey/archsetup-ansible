@@ -1,0 +1,17 @@
+---
+# tasks file for git
+- name: Installing git
+  ansible.builtin.package:
+    name: git
+    state: present
+
+- name: Setup ssh workeround for gitlab.puzzle.ch
+  ansible.builtin.lineinfile:
+    path: "/home/sebastian/.ssh/config"
+    line: "{{ _gitlab_line }}"
+    state: present
+  loop_control:
+    loop_var: _gitlab_line
+  loop:
+  - "Host ssh.gitlab.puzzle.ch"
+  - "  UpdateHostKeys no"
