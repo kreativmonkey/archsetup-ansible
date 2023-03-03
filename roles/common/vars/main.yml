@@ -1,0 +1,30 @@
+---
+# vars file for common
+common_packages_default:
+# Editors
+- helix
+- neovim
+- code
+# Terminal helper
+- exa
+- htop
+- tree
+- tmux
+- unzip
+- mosh
+- lsd
+- fzf
+- bat 
+- duf 
+- fd 
+- zoxide
+- mcfly
+###- cheat # Aktuell nur AUR!
+# Backup/Restore
+- chezmoi
+- restic
+###- vorta # Aktuell nur AUR!
+- rsync
+# Networking
+- nmap
+- tcpdump

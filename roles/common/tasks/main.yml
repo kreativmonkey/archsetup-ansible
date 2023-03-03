@@ -1,0 +1,38 @@
+---
+# tasks file for common
+- name: Installiere Puzzle typeset
+  ansible.builtin.package:
+    name: "{{ _common_schrift }}"
+    state: present
+  loop_control:
+    loop_var: _common_schrift
+  loop:
+  - ttf-roboto
+
+- name: Installing common packages
+  ansible.builtin.package:
+    name: "{{ _common_packages }}"
+    state: present
+  loop_control:
+    loop_var: _common_packages
+  loop:
+  - "{{ common_packages_default }}"
+
+- name: Install custom packages
+  ansible.builtin.package:
+    name: "{{ _common_custom_packages }}"
+    state: present
+  loop_control:
+    loop_var: _common_custom_packages
+  loop: "{{ custom_packages if custom_packages is iterable else [] }}"
+
+- name: Installing german dictionarys for spell checking
+  ansible.builtin.package:
+    name: "{{ _common_spellcheck }}"
+    state: present
+  loop_control:
+    loop_var: _common_spellcheck
+  loop:
+  - hunspell
+  - hunspell-de
+  - hunspell-en_us
