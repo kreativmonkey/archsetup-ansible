@@ -15,3 +15,8 @@
   loop:
   - "Host ssh.gitlab.puzzle.ch"
   - "  UpdateHostKeys no"
+
+- name: Installing lazygit as terminal helper
+  ansible.builtin.package:
+    name: lazygit
+    state: present
