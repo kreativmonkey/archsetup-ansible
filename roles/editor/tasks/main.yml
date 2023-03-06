@@ -42,3 +42,5 @@
       path: /etc/environment
       line: 'EDITOR={{default_editor}}'
       regexp: '^EDITOR='
+
+- include_tasks: "{{default_editor}}.yml"

@@ -1,3 +1,19 @@
 ---
 # defaults file for editor
 default_editor: vim
+
+
+# https://langserver.org/
+# Supported by helix: https://docs.helix-editor.com/lang-support.html
+helix_language_server:
+- gopls # for Go, gomod, gotmpl, gowork
+- python-lsp-server # python
+# - dockerfile-language-server # dockerfiles currently only in AUR!
+- yaml-language-server # yaml
+- texlab # latex
+- lua-language-server # lua
+#- haskell-language-server # haskell
+- bash-language-server # bash
+- vscode-json-languageserver # json
+- vscode-html-languageserver # html
+- vscode-css-languageserver # css

@@ -1,0 +1,22 @@
+---
+- name: Installing Helix
+  ansible.builtin.package:
+    name: helix
+    state: present
+
+- name: Create hx alias for Archlinux
+  ansible.builtin.lineinfile:
+    path: "/home/{{ _helix_user }}/.bashrc"
+    line: 'alias hx="helix"'
+    state: present
+  loop_control: 
+    loop_var: _helix_user
+  loop: "{{ system_users }}"
+   
+- name: Installing Language Servers
+  ansible.builtin.package:
+    name: "{{ _helix_language_server }}"
+    state: present
+  loop_control:
+    loop_var: _helix_language_server
+  loop: "{{ helix_language_server }}"
