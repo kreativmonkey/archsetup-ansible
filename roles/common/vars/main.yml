@@ -19,7 +19,8 @@ common_packages_default:
 - fd 
 - zoxide
 - mcfly
-###- cheat # Aktuell nur AUR!
+- ripgrep
+  ###- cheat # Aktuell nur AUR!
 # Backup/Restore
 - chezmoi
 - restic
