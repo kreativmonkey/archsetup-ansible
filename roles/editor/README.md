@@ -3,6 +3,15 @@ editor
 
 This role install and setting up the default editor.
 
+Available Editors
+-----------------
+
+For the current Editors are more settings included:
+
+- helix
+- vim
+- neovim
+
 Role Variables
 --------------
 
