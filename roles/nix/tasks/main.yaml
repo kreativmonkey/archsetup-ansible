@@ -17,7 +17,7 @@
     append: true
   loop_control:
     loop_var: _nix_user
-  loop: "{{ system_users }}"
+  loop: "{{ nix_users }}"
 
 - name: Setup Max Jobs to auto
   ansible.builtin.lineinfile:

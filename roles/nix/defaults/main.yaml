@@ -1,0 +1,2 @@
+---
+nix_users: "{{ system_users }}"
