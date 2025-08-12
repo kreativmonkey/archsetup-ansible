@@ -1,0 +1,14 @@
+---
+- name: Install required packages
+  ansible.builtin.package:
+    name:
+      - openssh
+    state: present
+  become: true
+
+# add ssh-key with ssh-add
+
+- name: Activate ssh agent
+  ansible.builtin.systemd_service:
+    name: ssh-agent
+    scope: "{{ sshd_user.name }}"

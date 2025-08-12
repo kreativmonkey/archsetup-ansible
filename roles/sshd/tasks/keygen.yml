@@ -1,0 +1,16 @@
+---
+# generates keys for user
+- name: Generate ssh keypair
+  community.crypto.openssh_keypair:
+    path: /home/{{ sshd_user.name }}/.ssh/{{ sshd_keyfile }}
+    owner: "{{ sshd_user.name }}"
+    group: "{{ sshd_user.group }}"
+    type: ed25519
+    mode: "0600"
+  register: __sshd_keygen
+  become: true
+
+- name: Deploy keys to git instances
+  ansible.builtin.include_role:
+    name: git
+    tasks_from: deploy_ssh_key.yml
