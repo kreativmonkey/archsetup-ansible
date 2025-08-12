@@ -1,0 +1,8 @@
+---
+# Variables:
+#    git (dic)
+#    git.configuration (list): List of configuration settings for different folders
+#    git.repositories (list): List of repositories to clone
+git_base_dir: "/home/{{ system_users[0].name }}/git"
+git_base_owner: "{{ system_user[0].name }}"
+git_base_group: "{{ system_user[0].name }}"

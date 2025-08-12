@@ -1,0 +1,45 @@
+---
+- name: Process git repositories list
+  vars:
+    repo_url: "{{ repository }}"
+
+    # Step 1: Detect FQDN / domain from the repo URL
+    # Works for https, ssh://, and git@domain: syntax
+    repo_domain: >-
+      {% if '://' in repo_url %}
+        {{ (repo_url.split('://')[1]).split('/')[0].split(':')[0] }}
+      {% elif '@' in repo_url and ':' in repo_url %}
+        {{ (repo_url.split('@')[1]).split(':')[0] }}
+      {% else %}
+        unknown.domain
+      {% endif %}
+
+    # Step 2: Extract project/repository name without ".git"
+    repo_name: "{{ repo_url | regex_replace('.*/', '') | regex_replace('\\.git$', '') }}"
+
+    # Step 3: Build target path
+    target_path: "{{ git_base_dir }}/{{ repo_domain }}/{{ repo_name }}"
+
+  block:
+
+    - name: Ensure target domain directory exists
+      ansible.builtin.file:
+        path: "{{ git_base_folder }}/{{ repo_domain }}"
+        state: directory
+        owner: "{{ git_base_owner }}"
+        group: "{{ git_base_group }}"
+        mode: '0755'
+        recurse: true
+      become: true
+
+    - name: Clone repository into target path
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ target_path }}"
+        accept_hostkey: true
+        update: false
+      register: git_result
+
+    - name: Show cloning result
+      ansible.builtin.debug:
+        msg: "Repo {{ repo_name }} cloned/updated at {{ target_path }} from {{ repo_domain }}"

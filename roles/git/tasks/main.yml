@@ -5,6 +5,36 @@
     name: git
     state: present
 
+- name: Installing lazygit as terminal helper
+  ansible.builtin.package:
+    name: lazygit
+    state: present
+  become: true
+
+- name: Create git project directory structure
+  ansible.builtin.file:
+    path: "{{ git_base_dir }}/{{ git_folder }}"
+    owner: "{{ git_base_owner }}"
+    group: "{{ git_base_group }}"
+    mode: "0755"
+    state: directory
+    recurse: true
+  become: true
+  loop_control:
+    loop_var: git_folder
+  loop: "{{ git.configuration | map('folder') }}"
+
+- name: Create configuration files for the different project folders
+  ansible.builtin.template:
+    src: gitconfig.j2
+    dest: "{{ git_base_dir }}/{{ git_config.folder }}/.gitconfig"
+    mode: "0644"
+    owner: "{{ git_base_owner }}"
+    group: "{{ git_base_group }}"
+  loop_control:
+    loop_var: git_config
+  loop: "{{ git.configuration }}"
+
 - name: Setup ssh workeround for gitlab.puzzle.ch
   ansible.builtin.lineinfile:
     path: "/home/sebastian/.ssh/config"
@@ -13,10 +43,13 @@
   loop_control:
     loop_var: _gitlab_line
   loop:
-  - "Host ssh.gitlab.puzzle.ch"
-  - "  UpdateHostKeys no"
+    - "Host ssh.gitlab.puzzle.ch"
+    - "  UpdateHostKeys no"
 
-- name: Installing lazygit as terminal helper
-  ansible.builtin.package:
-    name: lazygit
-    state: present
+- name: Clone neccessary git projects to the corresponding folders
+  ansible.builtin.include_role:
+    name: git
+    tasks_from: clone
+  loop_control:
+    loop_var: repository
+  loop: "{{ git.repositories }}"
