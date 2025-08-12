@@ -34,7 +34,7 @@
   ansible.builtin.lineinfile:
     path: "{{ _podman_rootless[0] }}"
     line: "{{ _podman_rootless[1] }}:100000:65535"
-    regexp: '^{{_podman_rootless_user }}:\d*:\d*$'
+    regexp: '^{{ _podman_rootless[1] }}:\d*:\d*$'
   register: podman_set_privileged
   loop_control:
     loop_var: _podman_rootless
