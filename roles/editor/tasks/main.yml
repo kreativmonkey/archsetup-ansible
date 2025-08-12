@@ -10,7 +10,7 @@
   - name: Get files expose EDITOR env
     ansible.builtin.find:
       paths: /etc
-      contains: '(export\s*)?EDITOR=[^{{default_editor}}][\w]*'
+      contains: '(export\s*)?EDITOR=[^{{ default_editor | replace("neovim", "nvim") }}][\w]*'
       recurse: true
     register: search_editor_env
     failed_when: >-
@@ -20,7 +20,7 @@
   - name: Check if Editor is already set to default
     ansible.builtin.lineinfile:
       path: /etc/environment
-      line: 'EDITOR={{default_editor}}'
+      line: 'EDITOR={{ default_editor | replace("neovim", "nvim") }}'
       state: present
     check_mode: true
     register: check_env
@@ -40,7 +40,7 @@
   - name: Setup default editor
     ansible.builtin.lineinfile:
       path: /etc/environment
-      line: 'EDITOR={{default_editor}}'
+      line: 'EDITOR={{ default_editor | replace("neovim", "nvim") }}'
       regexp: '^EDITOR='
 
-- include_tasks: "{{default_editor}}.yml"
+- include_tasks: "{{ default_editor }}.yml"

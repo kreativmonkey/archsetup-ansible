@@ -1,0 +1,10 @@
+---
+- name: Installing Packages for Vim
+  ansible.builtin.package:
+    name: "{{ _vim_package }}"
+    state: present
+  loop_control:
+    loop_var: _vim_package
+  loop:
+    - vim-plug
+    - vim-ansible
