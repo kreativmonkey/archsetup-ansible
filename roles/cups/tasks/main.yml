@@ -1,0 +1,21 @@
+---
+- name: Installing cups
+  ansible.builtin.package:
+    name: cups
+    state: present
+
+- name: Add group to cups users
+  ansible.builtin.user:
+    name: "{{ _cups_user }}"
+    groups: cups
+    append: true
+  loop_control:
+    loop_var: _cups_user
+  loop: "{{ cups_users }}"
+  notify: Restart cups
+
+- name: Start cups service
+  ansible.builtin.service:
+    name: cups
+    state: started
+    enabled: true
