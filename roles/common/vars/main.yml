@@ -6,7 +6,7 @@ common_packages_default:
 - neovim
 - code
 # Terminal helper
-- exa
+- eza
 - htop
 - tree
 - tmux
@@ -24,6 +24,7 @@ common_packages_default:
 # Backup/Restore
 - chezmoi
 - restic
+- ventoy
 ###- vorta # Aktuell nur AUR!
 - rsync
 # Networking
