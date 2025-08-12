@@ -13,9 +13,9 @@
 
 - name: Add user to video group for virtual Camera support
   ansible.builtin.user:
-    name: "{{ _system_users }}"
+    name: "{{ _obs_user }}"
     groups: video
     append: yes
   loop_control:
-    loop_var: _system_users
-  loop: "{{ system_users }}"
+    loop_var: _obs_user
+  loop: "{{ obs_users }}"
