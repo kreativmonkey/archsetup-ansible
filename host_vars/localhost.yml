@@ -1,0 +1,46 @@
+---
+system_users:
+  - name: sebastian
+    group: sebastian
+    groups:
+      - name: cups
+    shell: /bin/fish
+    keyboard: 
+    github: kreativmonkey
+
+podman_rootless_users: '{{ system_users[0].name }}'
+
+default_editor: nvim
+
+pacman:
+  parallel_downloads: 10
+
+openvpn:
+  redhat:
+    enable: true
+    username: "{{ lookup('community.general.bitwarden', 'Red Hat Kerberos', field='username') | first) }}"
+  puzzle:
+    enable: true
+    user: '{{ system_users[0].name }}'
+
+git:
+  config:
+    - folder: gitlab.puzzle.ch
+      name: Sebastian Preisner
+      email: preisner@puzzle-itc.de
+    - folder: github.com
+      name: Kreativmonkey
+      email: kreativmonkey@calyrium.org
+    - folder: git.f4mily.net
+      name: Kreativmonkey
+      email: kreativmonkey@calyrium.org
+
+  repositorys:
+    # git.puzzle.ch
+    - git@ssh.gitlab.puzzle.ch:pitcde/pdoc.git
+    - git@ssh.gitlab.puzzle.ch:pitcde/ansible-development.git
+    - git@ssh.gitlab.puzzle.ch:pitcde/ansible-schulung.git
+    # git.f4mily.net
+    # -
+    # github.com
+    # -
