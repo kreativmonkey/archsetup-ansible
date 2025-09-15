@@ -17,4 +17,4 @@
     state: present
   loop_control:
     loop_var: _helix_language_server
-  loop: "{{ helix_language_server }}"
+  loop: "{{ editor_helix_language_server }}"

@@ -2,45 +2,46 @@
 # tasks file for editor
 - name: Installing default editor
   ansible.builtin.package:
-    name: "{{ default_editor }}"
+    name: "{{ editor_default }}"
     state: present
 
 - name: Ensure default editor is set
   block:
-  - name: Get files expose EDITOR env
-    ansible.builtin.find:
-      paths: /etc
-      contains: '(export\s*)?EDITOR=[^{{ default_editor | replace("neovim", "nvim") }}][\w]*'
-      recurse: true
-    register: search_editor_env
-    failed_when: >-
-      search_editor_env.matched != 1 and  
-      (search_editor_env.files | selectattr('path', 'equalto', '/etc/environment'))
+    - name: Get files expose EDITOR env
+      ansible.builtin.find:
+        paths: /etc
+        contains: '(export\s*)?EDITOR=[^{{ editor_default | replace("neovim", "nvim") }}][\w]*'
+        recurse: true
+      register: _editor_search_env
+      failed_when: >-
+        _editor_search_env.matched != 1 and
+        (_editor_search_env.files | selectattr('path', 'equalto', '/etc/environment'))
 
-  - name: Check if Editor is already set to default
-    ansible.builtin.lineinfile:
-      path: /etc/environment
-      line: 'EDITOR={{ default_editor | replace("neovim", "nvim") }}'
-      state: present
-    check_mode: true
-    register: check_env
-    failed_when: >-
-      (check_env is changed) or (check_env is failed)
+    - name: Check if Editor is already set to default
+      ansible.builtin.lineinfile:
+        path: /etc/environment
+        line: 'EDITOR={{ editor_default | replace("neovim", "nvim") }}'
+        state: present
+      check_mode: true
+      register: _editor_check_env
+      failed_when: >-
+        (_editor_check_env is changed) or (_editor_check_env is failed)
 
   rescue:
-  - name: Remove EDITOR from all files
-    ansible.builtin.lineinfile:
-      path: "{{ _found_editor_files.path }}"
-      regexp: '(export\s*)?EDITOR=\w*'
-      state: absent
-    loop_control:
-      loop_var: _found_editor_files
-    loop: "{{ search_editor_env.files }}"
+    - name: Remove EDITOR from all files
+      ansible.builtin.lineinfile:
+        path: "{{ _found_editor_files.path }}"
+        regexp: '(export\s*)?EDITOR=\w*'
+        state: absent
+      loop_control:
+        loop_var: _editor_found_files
+      loop: "{{ search_editor_env.files }}"
 
-  - name: Setup default editor
-    ansible.builtin.lineinfile:
-      path: /etc/environment
-      line: 'EDITOR={{ default_editor | replace("neovim", "nvim") }}'
-      regexp: '^EDITOR='
+    - name: Setup default editor
+      ansible.builtin.lineinfile:
+        path: /etc/environment
+        line: 'EDITOR={{ editor_default | replace("neovim", "nvim") }}'
+        regexp: '^EDITOR='
 
-- include_tasks: "{{ default_editor }}.yml"
+- name: Configure default editor {{ editor_default }}
+  ansible.builtin.include_tasks: "{{ editor_default }}.yml"

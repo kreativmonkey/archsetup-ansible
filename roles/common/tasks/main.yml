@@ -7,7 +7,7 @@
   loop_control:
     loop_var: _common_schrift
   loop:
-  - ttf-roboto
+    - ttf-roboto
 
 - name: Installing common packages
   ansible.builtin.package:
@@ -16,7 +16,7 @@
   loop_control:
     loop_var: _common_packages
   loop:
-  - "{{ common_packages_default }}"
+    - "{{ common_packages_default }}"
 
 - name: Install custom packages
   ansible.builtin.package:
@@ -24,7 +24,7 @@
     state: present
   loop_control:
     loop_var: _common_custom_packages
-  loop: "{{ custom_packages if custom_packages is iterable else [] }}"
+  loop: "{{ common_custom_packages if common_custom_packages is iterable else [] }}"
 
 - name: Installing german dictionarys for spell checking
   ansible.builtin.package:
@@ -33,6 +33,6 @@
   loop_control:
     loop_var: _common_spellcheck
   loop:
-  - hunspell
-  - hunspell-de
-  - hunspell-en_us
+    - hunspell
+    - hunspell-de
+    - hunspell-en_us

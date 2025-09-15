@@ -1,5 +1,6 @@
 ---
-- hosts: localhost
+- name: Setup archlinux installation
+  hosts: localhost
   become: true
   roles:
     - common
@@ -10,3 +11,6 @@
     - conky
     - obs-studio
     - nix
+    - cups
+    - thinkpad_dock
+    # - openvpn

@@ -1,32 +1,33 @@
 ---
 # vars file for common
 common_packages_default:
-# Editors
-- helix
-- neovim
-- code
-# Terminal helper
-- eza
-- htop
-- tree
-- tmux
-- unzip
-- mosh
-- lsd
-- fzf
-- bat 
-- duf 
-- fd 
-- zoxide
-- mcfly
-- ripgrep
-  ###- cheat # Aktuell nur AUR!
-# Backup/Restore
-- chezmoi
-- restic
-- ventoy
-###- vorta # Aktuell nur AUR!
-- rsync
-# Networking
-- nmap
-- tcpdump
+  # Editors
+  - helix
+  - neovim
+  # - visual-studio-code-bin Aktuell nur AUR!
+  # Terminal helper
+  - eza
+  - yazi
+  - htop
+  - tree
+  - tmux
+  - unzip
+  - mosh
+  - lsd
+  - fzf
+  - bat
+  - duf
+  - fd
+  - zoxide
+  - mcfly
+  - ripgrep
+  ## - cheat # Aktuell nur AUR!
+  # Backup/Restore
+  - chezmoi
+  - restic
+  ## - ventoy # Aktuell nur AUR!
+  - vorta
+  - rsync
+  # Networking
+  - nmap
+  - tcpdump
