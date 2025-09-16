@@ -38,14 +38,11 @@
   register: podman_set_privileged
   loop_control:
     loop_var: _podman_rootless
-  loop: >-
-    {{ _podman_rootless_file | product( _podman_rootless_user ) }}
+  loop: "{{ paths | product(podman_rootless_users if (podman_rootless_users is iterable and podman_rootless_users is not string) else [podman_rootless_users]) | list }}" 
   vars:
-    _podman_rootless_user: >-
-      {{ podman_rootless_users }}
-    _podman_rootless_file:
-      - /etc/subuid
-      - /etc/subgid
+    paths:
+      - "/etc/subuid"
+      - "/etc/subgid"
 
 - name: Propagate changes to subuid and subgid
   ansible.builtin.command:
