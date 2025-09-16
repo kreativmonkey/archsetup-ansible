@@ -31,3 +31,5 @@ common_packages_default:
   # Networking
   - nmap
   - tcpdump
+  # Virtualisation
+  - virt-viewer
