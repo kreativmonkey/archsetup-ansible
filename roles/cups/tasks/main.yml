@@ -4,6 +4,11 @@
     name: cups
     state: present
 
+- name: Create Cups group
+  ansible.builtin.group:
+    name: cups
+    state: present
+
 - name: Add group to cups users
   ansible.builtin.user:
     name: "{{ _cups_user }}"

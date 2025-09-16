@@ -1,2 +1,3 @@
 ---
-cups_users: "{{ system_users }}"
+cups_users: 
+  - "{{ system_users[0].name }}"
