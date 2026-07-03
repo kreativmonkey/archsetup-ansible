@@ -1,0 +1,13 @@
+---
+# Benutzer, für die direnv eingerichtet wird (Shell-Hooks + Config)
+direnv_users: "{{ system_users | map(attribute='name') | list }}"
+
+# nix-direnv: gecachtes `use flake` — Dev-Shells überleben GC und laden schnell
+direnv_nix_direnv: true
+direnv_nix_direnv_version: "3.1.1"
+
+# ~/.config/direnv/direnv.toml
+direnv_settings: |
+  [global]
+  hide_env_diff = true
+  warn_timeout = "60s"

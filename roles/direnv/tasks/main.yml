@@ -1,0 +1,99 @@
+---
+# tasks file for direnv
+- name: Install direnv
+  ansible.builtin.package:
+    name: direnv
+    state: present
+
+- name: Create nix-direnv directory
+  ansible.builtin.file:
+    path: /usr/share/nix-direnv
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: direnv_nix_direnv
+
+- name: Install nix-direnv (direnvrc von upstream, kein Arch-Paket vorhanden)
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/nix-community/nix-direnv/{{ direnv_nix_direnv_version }}/direnvrc"
+    dest: /usr/share/nix-direnv/direnvrc
+    owner: root
+    group: root
+    mode: '0644'
+  when: direnv_nix_direnv
+
+- name: Create direnv config directory
+  ansible.builtin.file:
+    path: "/home/{{ _direnv_user }}/.config/direnv"
+    state: directory
+    owner: "{{ _direnv_user }}"
+    group: "{{ _direnv_user }}"
+    mode: '0755'
+  loop_control:
+    loop_var: _direnv_user
+  loop: "{{ direnv_users }}"
+
+- name: Configure direnv (direnv.toml)
+  ansible.builtin.copy:
+    content: "{{ direnv_settings }}"
+    dest: "/home/{{ _direnv_user }}/.config/direnv/direnv.toml"
+    owner: "{{ _direnv_user }}"
+    group: "{{ _direnv_user }}"
+    mode: '0644'
+  loop_control:
+    loop_var: _direnv_user
+  loop: "{{ direnv_users }}"
+
+- name: Load nix-direnv in user direnvrc
+  ansible.builtin.copy:
+    content: |
+      # Managed by ansible (roles/direnv)
+      source /usr/share/nix-direnv/direnvrc
+    dest: "/home/{{ _direnv_user }}/.config/direnv/direnvrc"
+    owner: "{{ _direnv_user }}"
+    group: "{{ _direnv_user }}"
+    mode: '0644'
+  loop_control:
+    loop_var: _direnv_user
+  loop: "{{ direnv_users }}"
+  when: direnv_nix_direnv
+
+- name: Create fish conf.d directory
+  ansible.builtin.file:
+    path: "/home/{{ _direnv_user }}/.config/fish/conf.d"
+    state: directory
+    owner: "{{ _direnv_user }}"
+    group: "{{ _direnv_user }}"
+    mode: '0755'
+  loop_control:
+    loop_var: _direnv_user
+  loop: "{{ direnv_users }}"
+
+- name: Enable direnv hook for fish
+  ansible.builtin.copy:
+    content: |
+      # Managed by ansible (roles/direnv)
+      if type -q direnv
+          direnv hook fish | source
+      end
+    dest: "/home/{{ _direnv_user }}/.config/fish/conf.d/direnv.fish"
+    owner: "{{ _direnv_user }}"
+    group: "{{ _direnv_user }}"
+    mode: '0644'
+  loop_control:
+    loop_var: _direnv_user
+  loop: "{{ direnv_users }}"
+
+- name: Enable direnv hook for bash
+  ansible.builtin.lineinfile:
+    path: "/home/{{ _direnv_user }}/.bashrc"
+    regexp: 'direnv hook bash'
+    line: 'command -v direnv >/dev/null && eval "$(direnv hook bash)"'
+    create: true
+    owner: "{{ _direnv_user }}"
+    group: "{{ _direnv_user }}"
+    mode: '0644'
+  loop_control:
+    loop_var: _direnv_user
+  loop: "{{ direnv_users }}"

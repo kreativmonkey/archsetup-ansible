@@ -4,13 +4,21 @@
   become: true
   roles:
     - common
+    #- sshd
     - podman
     - pacman
-    - editor
-    - git
-    - conky
-    - obs-studio
+    #- editor
+    #- git
+    - udev
+    - wireguard
+    #- obs-studio
+    #- lazyvim
     - nix
+    - direnv
     - cups
-    - thinkpad_dock
+    - gnome-keyring
+    #- headroom
+    - ollama
+    - opencode
+    #- thinkpad_dock
     # - openvpn
