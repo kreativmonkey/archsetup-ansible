@@ -6,6 +6,9 @@
     state: present
   become: true
 
+- name: Generate ssh_key
+  ansible.builtin.include_tasks: keygen.yml
+
 # add ssh-key with ssh-add
 
 - name: Activate ssh agent
