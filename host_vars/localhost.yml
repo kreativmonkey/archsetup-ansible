@@ -8,7 +8,7 @@ system_users:
     keyboard: 
     github: kreativmonkey
 
-podman_rootless_users: '{{ system_users[0].name }}'
+podman_rootless_users: "{{ system_users[0].name }}"
 
 default_editor: nvim
 
@@ -18,7 +18,7 @@ pacman:
 openvpn:
   redhat:
     enable: true
-    username: "{{ lookup('community.general.bitwarden', 'Red Hat Kerberos', field='username') | first) }}"
+    username: "{{ lookup('community.general.bitwarden', 'Red Hat Kerberos', field='username') | first }}"
   puzzle:
     enable: true
     user: '{{ system_users[0].name }}'

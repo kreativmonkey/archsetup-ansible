@@ -1,0 +1,35 @@
+---
+- name: Generate private key for {{ wireguard_interface }}
+  block:
+    - name: Check if private key exists
+      ansible.builtin.stat:
+        path: /etc/wireguard/privatekey-{{ wireguard_interface }}
+      register: private_key
+      become: true
+
+    - name: Generate private key
+      ansible.builtin.shell: wg genkey | tee privatekey-{{ wireguard_interface }} | wg pubkey > publickey-{{ wireguard_interface }}
+      args:
+        chdir: /etc/wireguard
+        creates: /etc/wireguard/privatekey-{{ wireguard_interface }}
+      when: not private_key.stat.exists
+      become: true
+
+    - name: Set key file permissions
+      ansible.builtin.file:
+        path: /etc/wireguard/privatekey-{{ wireguard_interface }}
+        owner: root
+        group: root
+        mode: 0600
+      become: true
+      delay: 2
+
+- name: Slurp private key
+  ansible.builtin.slurp:
+    path: /etc/wireguard/privatekey-{{ wireguard_interface }}
+  register: private_key_content
+  become: true
+
+- set_fact:
+    private_key: "{{ private_key_content['content'] | b64decode | replace('\n', '') }}"
+  no_log: true

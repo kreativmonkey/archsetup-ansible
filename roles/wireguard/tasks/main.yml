@@ -1,0 +1,25 @@
+- name: Install required packages for WireGuard
+  ansible.builtin.package:
+    name:
+      - wireguard-tools
+      - net-tools
+    state: present
+  become: true
+
+- name: Enable IPv4 forwarding
+  ansible.builtin.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    state: present
+    reload: yes
+  become: true
+
+- name: Generate wireguard configuration
+  include_tasks: __create/generate_config.yml
+  loop_control:
+    loop_var: wireguard_interface
+  loop: "{{ wg_interfaces }}"
+  vars:
+    wg_interfaces:
+      - pudelab
+      - wg0

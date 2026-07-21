@@ -1,0 +1,12 @@
+[Interface]
+Address = {{ pudelab_address }}
+PrivateKey = {{ private_key }}
+DNS = 1.1.1.1,1.0.0.1,2606:4700:4700::1111,2606:4700:4700::1001
+MTU = 1300
+
+[Peer]
+PublicKey = {{ pudelab_public_key }}
+PresharedKey = {{ pudelab_preshared_key }}
+AllowedIPs = {{ pudelab_allowed_ips }}
+Endpoint = {{ pudelab_endpoint }}
+PersistentKeepalive = 15

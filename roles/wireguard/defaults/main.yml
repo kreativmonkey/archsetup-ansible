@@ -1,0 +1,27 @@
+---
+wireguard_address: "10.0.0.1/24"
+wireguard_port: 51820
+wireguard_interface: "wg0"
+wireguard_eth: "eth0"
+wgdashboard_port: 10086
+
+# pudelab client tunnel (roles/wireguard/templates/pudelab.conf.j2).
+# All identifying / secret values are pulled from a single Bitwarden item
+# named "WireGuard pudelab" (custom fields) so nothing infra-specific lands in
+# git. Adjust the item name / field names below to match your vault.
+pudelab_address: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='Address') | first }}"
+pudelab_public_key: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='PublicKey') | first }}"
+pudelab_preshared_key: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='PresharedKey') | first }}"
+pudelab_allowed_ips: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='AllowedIPs') | first }}"
+pudelab_endpoint: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='Endpoint') | first }}"
+
+# Define peers as a list of dicts
+wireguard_peers: []
+# Example:
+# wireguard_peers:
+#   - public_key: "pubkey1"
+#     allowed_ips: "10.0.0.2/32"
+#     endpoint: "peer1.example.com:51820"
+#     persistent_keepalive: 25
+#   - public_key: "pubkey2"
+#     allowed_ips: "10.0.0.3/32"
