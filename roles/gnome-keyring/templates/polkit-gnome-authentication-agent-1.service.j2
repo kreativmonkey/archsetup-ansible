@@ -1,0 +1,15 @@
+# Managed by Ansible (gnome-keyring role)
+[Unit]
+Description=Legacy polkit authentication agent (GNOME) for the graphical session
+Documentation=man:polkit(8)
+PartOf=graphical-session.target
+After=graphical-session.target
+Requisite=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart={{ gnome_keyring_polkit_agent_exec }}
+Restart=on-failure
+
+[Install]
+WantedBy=graphical-session.target

@@ -1,0 +1,4 @@
+[Service]
+{% for key, value in ollama_environment_variables.items() %}
+Environment="{{ key }}={{ value }}"
+{% endfor %}

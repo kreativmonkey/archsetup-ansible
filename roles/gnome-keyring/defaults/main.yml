@@ -1,0 +1,29 @@
+---
+# defaults file for gnome-keyring
+gnome_keyring_user: "{{ system_users[0].name }}"
+
+# Packages required for a complete keyring setup under a non-GNOME compositor
+# (niri). gnome-keyring provides the Secret Service (passwords) and the pkcs11
+# component; gcr-4/seahorse provide the gcr libraries + GUI manager; libsecret
+# ships the secret-tool CLI; polkit-gnome is the authentication agent that
+# renders privilege-escalation prompts.
+gnome_keyring_packages:
+  - gnome-keyring
+  - gcr-4
+  - libsecret
+  - seahorse
+  - polkit-gnome
+
+# SSH is handled by OpenSSH's own ssh-agent (user service), NOT gcr-ssh-agent.
+# Under a non-GNOME (niri) session there is no passphrase prompter, so
+# gcr-ssh-agent busy-loops ssh-add at 100% CPU when a passphrase-protected key
+# is used (e.g. Vorta/borg over SSH), hanging the connection. gnome-keyring
+# still provides the Secret Service (passwords) + pkcs11.
+gnome_keyring_enable_ssh_agent: true
+# Socket exposed by OpenSSH's ssh-agent.socket (ListenStream=%t/ssh-agent.socket).
+gnome_keyring_ssh_auth_sock: "${XDG_RUNTIME_DIR}/ssh-agent.socket"
+
+# Run a polkit authentication agent inside the graphical session so GUI
+# privilege-escalation prompts (mounting drives, GParted, ...) appear.
+gnome_keyring_enable_polkit_agent: true
+gnome_keyring_polkit_agent_exec: /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1

@@ -1,0 +1,6 @@
+---
+- name: Restart ollama
+  ansible.builtin.service:
+    name: ollama
+    state: restarted
+    enabled: true

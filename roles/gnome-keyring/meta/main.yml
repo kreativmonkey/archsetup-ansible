@@ -1,0 +1,17 @@
+galaxy_info:
+  author: Sebastian Preisner
+  description: Set up gnome-keyring (Secret Service), gcr-ssh-agent and a polkit authentication agent for a niri/Wayland session on Arch Linux
+  license: MIT
+  min_ansible_version: "2.12"
+  platforms:
+    - name: ArchLinux
+      versions:
+        - all
+  galaxy_tags:
+    - keyring
+    - gnome
+    - polkit
+    - ssh
+    - niri
+    - wayland
+dependencies: []

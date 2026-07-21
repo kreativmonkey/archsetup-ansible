@@ -1,0 +1,82 @@
+---
+# tasks file for gnome-keyring
+
+- name: Install gnome-keyring and related packages
+  community.general.pacman:
+    name: "{{ gnome_keyring_packages }}"
+    state: present
+
+# --- SSH agent integration (OpenSSH ssh-agent, NOT gcr-ssh-agent) ----------
+
+- name: Ensure user environment.d directory exists
+  ansible.builtin.file:
+    path: "/home/{{ gnome_keyring_user }}/.config/environment.d"
+    state: directory
+    owner: "{{ gnome_keyring_user }}"
+    group: "{{ gnome_keyring_user }}"
+    mode: '0755'
+  when: gnome_keyring_enable_ssh_agent
+
+- name: Point SSH_AUTH_SOCK at the OpenSSH ssh-agent socket
+  ansible.builtin.template:
+    src: 10-gnome-keyring-ssh.conf.j2
+    dest: "/home/{{ gnome_keyring_user }}/.config/environment.d/10-gnome-keyring-ssh.conf"
+    owner: "{{ gnome_keyring_user }}"
+    group: "{{ gnome_keyring_user }}"
+    mode: '0644'
+  when: gnome_keyring_enable_ssh_agent
+
+- name: Disable gcr-ssh-agent SSH socket (busy-loops on passphrase keys under niri)
+  ansible.builtin.systemd:
+    name: gcr-ssh-agent.socket
+    scope: user
+    enabled: false
+    state: stopped
+    daemon_reload: true
+  become: true
+  become_user: "{{ gnome_keyring_user }}"
+  when: gnome_keyring_enable_ssh_agent
+  failed_when: false
+
+- name: Enable and start OpenSSH ssh-agent socket
+  ansible.builtin.systemd:
+    name: ssh-agent.socket
+    scope: user
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
+  become_user: "{{ gnome_keyring_user }}"
+  when: gnome_keyring_enable_ssh_agent
+
+# --- Polkit authentication agent -------------------------------------------
+
+- name: Ensure user systemd directory exists
+  ansible.builtin.file:
+    path: "/home/{{ gnome_keyring_user }}/.config/systemd/user"
+    state: directory
+    owner: "{{ gnome_keyring_user }}"
+    group: "{{ gnome_keyring_user }}"
+    mode: '0755'
+  when: gnome_keyring_enable_polkit_agent
+
+- name: Template polkit authentication agent user service
+  ansible.builtin.template:
+    src: polkit-gnome-authentication-agent-1.service.j2
+    dest: "/home/{{ gnome_keyring_user }}/.config/systemd/user/polkit-gnome-authentication-agent-1.service"
+    owner: "{{ gnome_keyring_user }}"
+    group: "{{ gnome_keyring_user }}"
+    mode: '0644'
+  notify: Restart polkit agent
+  when: gnome_keyring_enable_polkit_agent
+
+- name: Enable and start polkit authentication agent
+  ansible.builtin.systemd:
+    name: polkit-gnome-authentication-agent-1.service
+    scope: user
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
+  become_user: "{{ gnome_keyring_user }}"
+  when: gnome_keyring_enable_polkit_agent

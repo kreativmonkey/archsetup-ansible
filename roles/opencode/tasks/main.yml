@@ -1,0 +1,33 @@
+---
+- name: Install system LSP packages
+  community.general.pacman:
+    name:
+      - yaml-language-server
+      - pyright
+      - rust-analyzer
+      - gopls
+      - bash-language-server
+      - typescript-language-server
+      - npm
+      - ripgrep
+    state: present
+    update_cache: true
+  tags: [opencode]
+
+- name: Create opencode config directory
+  ansible.builtin.file:
+    path: "{{ opencode_config_path | dirname }}"
+    state: directory
+    owner: "{{ opencode_user }}"
+    group: "{{ opencode_user }}"
+    mode: '0755'
+  tags: [opencode]
+
+- name: Configure opencode.json
+  ansible.builtin.template:
+    src: opencode.json.j2
+    dest: "{{ opencode_config_path }}"
+    owner: "{{ opencode_user }}"
+    group: "{{ opencode_user }}"
+    mode: '0644'
+  tags: [opencode]

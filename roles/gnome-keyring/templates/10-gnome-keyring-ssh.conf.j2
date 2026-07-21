@@ -1,0 +1,8 @@
+# Managed by Ansible (gnome-keyring role)
+# SSH is handled by OpenSSH's own ssh-agent (user service), NOT gcr-ssh-agent.
+# gcr/gnome-keyring busy-loops ssh-add at 100% CPU on passphrase-protected keys
+# under a non-GNOME (niri) session because no passphrase prompter is available,
+# which hangs SSH connections (e.g. Vorta/borg). gnome-keyring still provides
+# the Secret Service (passwords) + pkcs11.
+# Read by the systemd user manager and exported into the graphical session.
+SSH_AUTH_SOCK={{ gnome_keyring_ssh_auth_sock }}

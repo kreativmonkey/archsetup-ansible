@@ -1,0 +1,56 @@
+---
+- name: Install ollama and acceleration package
+  community.general.pacman:
+    name:
+      - ollama
+      - "{{ ollama_acceleration_package }}"
+      - rocm-smi-lib
+    state: present
+
+- name: Ensure ollama user is in render and video groups for GPU access
+  ansible.builtin.user:
+    name: ollama
+    groups:
+      - render
+      - video
+    append: true
+  notify: Restart ollama
+
+- name: Create systemd override directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/ollama.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Configure ollama environment variables
+  ansible.builtin.template:
+    src: override.conf.j2
+    dest: /etc/systemd/system/ollama.service.d/override.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart ollama
+
+- name: Ensure ollama service is started and enabled
+  ansible.builtin.service:
+    name: ollama
+    state: started
+    enabled: true
+
+- name: Pull configured ollama models
+  ansible.builtin.command:
+    cmd: "ollama pull {{ item }}"
+  loop: "{{ ollama_models }}"
+  register: _ollama_pull
+  changed_when: "'pulling manifest' in _ollama_pull.stdout"
+
+- name: Apply model customizations (Modelfiles)
+  ansible.builtin.shell: |
+    printf 'FROM {{ item.from }}\n{% if item.template is defined %}TEMPLATE """{{ item.template }}"""\n{% endif %}{% if item.parameters is defined %}{% for key, value in item.parameters.items() %}PARAMETER {{ key }} {{ value }}\n{% endfor %}{% endif %}{% if item.system is defined %}SYSTEM "{{ item.system }}"\n{% endif %}' > /tmp/OllamaCustomModelfile && \
+    ollama create {{ item.name }} -f /tmp/OllamaCustomModelfile && \
+    rm /tmp/OllamaCustomModelfile
+  loop: "{{ ollama_model_customizations }}"
+  register: _ollama_create
+  changed_when: "'success' in _ollama_create.stdout"

@@ -1,0 +1,103 @@
+---
+opencode_user: "{{ system_users[0].name }}"
+opencode_config_path: "/home/{{ opencode_user }}/.config/opencode/opencode.json"
+
+opencode_model: "ollama/mistral-small:latest"
+opencode_small_model: "ollama/qwen3-coder:latest"
+
+opencode_agents:
+  plan:
+    model: "ollama/mistral-small:latest"
+    steps: 8
+    strategy: "comprehensive"
+    instruction: |
+      Focus on architectural integrity and edge cases. 
+      Break down complex tasks into independent sub-tasks suitable for sub-agents. 
+      Always prioritize token efficiency by summarizing context.
+  build:
+    model: "ollama/qwen3-coder:latest"
+    instruction: |
+      You are a TDD-focused builder. 
+      Every code change MUST be accompanied by a verification step or test case. 
+      Prefer composition over inheritance.
+  doc:
+    model: "ollama/gemma4:latest"
+    instruction: "Write concise, technical documentation in Markdown. Focus on 'Why' rather than 'What'."
+
+opencode_orchestration:
+  use_subagents: true
+  parallel_execution: true
+  max_subagents: 3
+
+opencode_providers:
+  ollama:
+    npm: "@ai-sdk/openai-compatible"
+    name: "Ollama (local)"
+    options:
+      baseURL: "http://localhost:11434/v1"
+      maxOutputTokens: 16384
+    models:
+      "qwen3-coder:30b":
+        name: "Qwen 3 Coder (30B)"
+        limit:
+          context: 65536
+          output: 8192
+        tool_call: true
+        reasoning: true
+      "mistral-small:24b":
+        name: "Mistral Small 4 (24B)"
+        limit:
+          context: 32768
+          output: 4096
+        tool_call: true
+      "gemma4:latest":
+        name: "Gemma 4"
+        limit:
+          context: 32768
+          output: 4096
+
+opencode_lsp:
+  yaml:
+    command: ["yaml-language-server", "--stdio"]
+    extensions: [".yaml", ".yml"]
+  python:
+    command: ["pyright-langserver", "--stdio"]
+    extensions: [".py"]
+  rust:
+    command: ["rust-analyzer"]
+    extensions: [".rs"]
+  go:
+    command: ["gopls"]
+    extensions: [".go"]
+  typescript:
+    command: ["typescript-language-server", "--stdio"]
+    extensions: [".ts", ".tsx", ".js", ".jsx"]
+  bash:
+    command: ["bash-language-server", "start"]
+    extensions: [".sh", ".bash"]
+
+opencode_mcp:
+  headroom:
+    type: "local"
+    command: ["/home/{{ opencode_user }}/.local/bin/headroom", "mcp", "serve"]
+    enabled: true
+  filesystem:
+    type: "local"
+    command: ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/{{ opencode_user }}"]
+    enabled: true
+  git:
+    type: "local"
+    command: ["uvx", "mcp-server-git", "--repository", "."]
+    enabled: true
+  kubernetes:
+    type: "local"
+    command: ["npx", "-y", "kubernetes-mcp-server@latest"]
+    enabled: true
+  memory:
+    type: "local"
+    command: ["npx", "-y", "@modelcontextprotocol/server-memory"]
+    enabled: true
+  ripgrep:
+    type: "local"
+    command: ["npx", "-y", "mcp-ripgrep"]
+    enabled: true
