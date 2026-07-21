@@ -10,6 +10,11 @@
     state: started
     enabled: true
 
+- name: Create nix-users Group
+  ansible.builtin.group:
+    name: nix-users
+    state: present
+
 - name: Add users to the nix-users Group
   ansible.builtin.user:
     name: "{{ _nix_user }}"
