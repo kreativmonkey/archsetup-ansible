@@ -13,43 +13,44 @@
 
 - name: Create git project directory structure
   ansible.builtin.file:
-    path: "{{ git_base_dir }}/{{ git_folder }}"
-    owner: "{{ git_base_owner }}"
-    group: "{{ git_base_group }}"
+    path: "{{ git_base.dir }}/{{ git_folder }}"
+    owner: "{{ git_base.owner }}"
+    group: "{{ git_base.group }}"
     mode: "0755"
     state: directory
     recurse: true
   become: true
   loop_control:
     loop_var: git_folder
-  loop: "{{ git.configuration | map('folder') }}"
+  loop: "{{ git.config | map(attribute='folder') }}"
 
 - name: Create configuration files for the different project folders
   ansible.builtin.template:
     src: gitconfig.j2
-    dest: "{{ git_base_dir }}/{{ git_config.folder }}/.gitconfig"
+    dest: "{{ git_base.dir }}/{{ git_config.folder }}/.gitconfig"
     mode: "0644"
-    owner: "{{ git_base_owner }}"
-    group: "{{ git_base_group }}"
+    owner: "{{ git_base.owner }}"
+    group: "{{ git_base.group }}"
   loop_control:
     loop_var: git_config
-  loop: "{{ git.configuration }}"
+  loop: "{{ git.config }}"
 
-- name: Setup ssh workeround for gitlab.puzzle.ch
-  ansible.builtin.lineinfile:
-    path: "/home/sebastian/.ssh/config"
-    line: "{{ _gitlab_line }}"
-    state: present
-  loop_control:
-    loop_var: _gitlab_line
-  loop:
-    - "Host ssh.gitlab.puzzle.ch"
-    - "  UpdateHostKeys no"
+# TODO: Use sshd role with add_config for add specific host configuration
+# - name: Setup ssh workeround for gitlab.puzzle.ch
+#  ansible.builtin.lineinfile:
+#    path: "/home/sebastian/.ssh/config"
+#    line: "{{ _gitlab_line }}"
+#    state: present
+#  loop_control:
+#    loop_var: _gitlab_line
+#  loop:
+#    - "Host ssh.gitlab.puzzle.ch"
+#    - "  UpdateHostKeys no"
 
-- name: Clone neccessary git projects to the corresponding folders
-  ansible.builtin.include_role:
-    name: git
-    tasks_from: clone
-  loop_control:
-    loop_var: repository
-  loop: "{{ git.repositories }}"
+#- name: Clone neccessary git projects to the corresponding folders
+#  ansible.builtin.include_role:
+#    name: git
+#    tasks_from: clone
+#  loop_control:
+#    loop_var: repository
+#  loop: "{{ git.repositories }}"
