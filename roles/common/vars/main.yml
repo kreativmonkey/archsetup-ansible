@@ -9,6 +9,7 @@ common_packages_default:
   - eza
   - yazi
   - htop
+  - btop
   - tree
   - tmux
   - unzip
@@ -17,19 +18,30 @@ common_packages_default:
   - fzf
   - bat
   - duf
+  - git-delta
+  - jujutsu
+  - lazyjj
   - fd
   - zoxide
   - mcfly
   - ripgrep
+  - direnv
   ## - cheat # Aktuell nur AUR!
   # Backup/Restore
   - chezmoi
   - restic
   ## - ventoy # Aktuell nur AUR!
   - vorta
+  - seahorse
   - rsync
   # Networking
   - nmap
   - tcpdump
   # Virtualisation
   - virt-viewer
+  # Office
+  - evolution
+  - xournalpp
+  - nextcloud-client
+  - libreoffice-fresh
+  #- libreoffice-fresh-de
