@@ -1,0 +1,20 @@
+galaxy_info:
+  author: Sebastian Preisner
+  description: Install and switch between Neovim distributions on Arch Linux
+  license: MIT
+  min_ansible_version: "2.12"
+  platforms:
+    - name: Archlinux
+      versions:
+        - all
+  galaxy_tags:
+    - neovim
+    - editor
+    - archlinux
+    - astronvim
+    - lazyvim
+    - nvchad
+    - spacevim
+    - lunarvim
+
+dependencies: []

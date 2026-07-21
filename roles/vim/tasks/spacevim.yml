@@ -1,0 +1,16 @@
+---
+# SpaceVim ships no plain config repo either; upstream only supports its
+# installer. It clones ~/.SpaceVim and symlinks ~/.config/nvim to it.
+
+- name: Install SpaceVim via upstream installer
+  ansible.builtin.shell:
+    cmd: >-
+      set -o pipefail;
+      curl -fsSL https://spacevim.org/install.sh
+      | bash -s -- --install neovim
+    creates: "{{ vim_home }}/.SpaceVim"
+    executable: /bin/bash
+  become: true
+  become_user: "{{ vim_user }}"
+  environment:
+    HOME: "{{ vim_home }}"

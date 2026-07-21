@@ -1,0 +1,46 @@
+---
+# tasks file for vim
+
+- name: Validate selected Neovim distribution
+  ansible.builtin.assert:
+    that: vim_distro in vim_valid_distros
+    fail_msg: >-
+      vim_distro '{{ vim_distro }}' is not supported.
+      Choose one of: {{ vim_valid_distros | join(', ') }}.
+    quiet: true
+
+- name: Install optional dependencies (official Arch repos)
+  ansible.builtin.package:
+    name: "{{ vim_dependencies }}"
+    state: present
+  become: true
+
+- name: Back up existing Neovim configuration
+  when: vim_backup
+  become: true
+  become_user: "{{ vim_user }}"
+  block:
+    - name: Check for existing Neovim configuration
+      ansible.builtin.stat:
+        path: "{{ vim_config_path }}"
+      register: _vim_existing_config
+
+    - name: Copy current configuration to backup
+      ansible.builtin.copy:
+        remote_src: true
+        src: "{{ vim_config_path }}/"
+        dest: "{{ vim_config_path }}.back"
+        mode: preserve
+      when: _vim_existing_config.stat.exists
+
+- name: Remove any previously installed distribution
+  ansible.builtin.file:
+    path: "{{ _vim_cleanup_path }}"
+    state: absent
+  become: true
+  loop: "{{ vim_cleanup_paths }}"
+  loop_control:
+    loop_var: _vim_cleanup_path
+
+- name: Install selected distribution ({{ vim_distro }})
+  ansible.builtin.include_tasks: "{{ vim_distro }}.yml"

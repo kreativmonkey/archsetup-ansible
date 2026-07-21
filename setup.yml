@@ -12,7 +12,7 @@
     - udev
     - wireguard
     #- obs-studio
-    #- lazyvim
+    #- vim
     - nix
     - direnv
     - cups

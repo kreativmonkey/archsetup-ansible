@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  become: true
+  vars:
+    system_users:
+      - name: "{{ ansible_user_id }}"
+  roles:
+    - vim

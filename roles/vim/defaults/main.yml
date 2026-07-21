@@ -1,0 +1,14 @@
+---
+# defaults file for vim
+#
+# Which Neovim distribution to install. On change the previously installed
+# distribution is removed so that only the selected one remains.
+# One of: astronvim, lazyvim, nvchad, spacevim, lunarvim
+vim_distro: lazyvim
+
+# User the distribution is installed for (home dir, ownership, installers run
+# as this user).
+vim_user: "{{ system_users[0].name }}"
+
+# Back up an existing ~/.config/nvim before it is removed.
+vim_backup: true

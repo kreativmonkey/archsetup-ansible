@@ -1,5 +1,0 @@
-#SPDX-License-Identifier: MIT-0
----
-# defaults file for lazyvim
-lazyvim_save_install: True
-lazyvim_user: "{{ system_users[0].name }}"

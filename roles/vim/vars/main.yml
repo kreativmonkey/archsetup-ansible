@@ -1,0 +1,89 @@
+---
+# vars file for vim
+
+vim_home: "/home/{{ vim_user }}"
+vim_config_path: "{{ vim_home }}/.config/nvim"
+
+# Accepted values for vim_distro.
+vim_valid_distros:
+  - astronvim
+  - lazyvim
+  - nvchad
+  - spacevim
+  - lunarvim
+
+# Config-starter repositories for the git-clone based distributions.
+vim_repos:
+  astronvim: https://github.com/AstroNvim/template
+  lazyvim: https://github.com/LazyVim/starter
+  nvchad: https://github.com/NvChad/starter
+
+# LunarVim release branch (pins a compatible Neovim version).
+vim_lunarvim_branch: "release-1.4/neovim-0.9"
+
+# Every distribution-related path that gets removed before installing the
+# selected distribution. This is what guarantees that only one distribution is
+# ever present and that switching cleanly deactivates the previous one.
+vim_cleanup_paths:
+  # git-clone distros + SpaceVim symlink target
+  - "{{ vim_home }}/.config/nvim"
+  # LunarVim
+  - "{{ vim_home }}/.config/lvim"
+  - "{{ vim_home }}/.local/share/lunarvim"
+  - "{{ vim_home }}/.local/state/lvim"
+  - "{{ vim_home }}/.cache/lvim"
+  - "{{ vim_home }}/.local/bin/lvim"
+  # SpaceVim
+  - "{{ vim_home }}/.SpaceVim"
+  - "{{ vim_home }}/.SpaceVim.d"
+  - "{{ vim_home }}/.config/nvim_back"
+  # shared Neovim runtime state
+  - "{{ vim_home }}/.local/share/nvim"
+  - "{{ vim_home }}/.local/state/nvim"
+  - "{{ vim_home }}/.cache/nvim"
+
+# Optional dependencies, all from the official Arch repositories (no AUR).
+# These cover the tooling the supported distributions detect and use:
+# treesitter/LSP builds, fuzzy finding, git integration, clipboard, fonts and
+# image previews.
+vim_dependencies:
+  # core
+  - neovim
+  - git
+  - curl
+  - wget
+  - unzip
+  - tar
+  - gzip
+  # search / navigation / git ui
+  - ripgrep
+  - fd
+  - fzf
+  - lazygit
+  # treesitter + build toolchain for parsers/plugins
+  - tree-sitter-cli
+  - gcc
+  - make
+  # language runtimes used by plugins / mason-less installs
+  - nodejs
+  - npm
+  - python
+  - python-pynvim
+  - go
+  - rust
+  # clipboard providers (X11 + Wayland)
+  - xclip
+  - wl-clipboard
+  # nerd fonts / icons
+  - ttf-nerd-fonts-symbols
+  - ttf-nerd-fonts-symbols-mono
+  - otf-monaspace-nerdfonts
+  # language servers available in the official repos
+  - lua-language-server
+  - bash-language-server
+  - yaml-language-server
+  # nice-to-haves several distros integrate with
+  - bat
+  - git-delta
+  - imagemagick
+  - chafa
