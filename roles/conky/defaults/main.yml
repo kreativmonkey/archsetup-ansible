@@ -1,0 +1,2 @@
+conky_users: 
+  - "{{ system_users[0].name }}"
