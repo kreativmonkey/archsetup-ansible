@@ -1,0 +1,6 @@
+---
+# defaults file for headroom
+headroom_user: "{{ system_users[0].name }}"
+headroom_port: 8787
+headroom_python_version: "3.13"
+headroom_install_package: "headroom-ai[all]"

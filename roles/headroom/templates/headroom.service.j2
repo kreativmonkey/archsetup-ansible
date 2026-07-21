@@ -1,0 +1,11 @@
+[Unit]
+Description=Headroom Context Compression Proxy
+After=network.target
+
+[Service]
+ExecStart=/home/{{ headroom_user }}/.local/bin/headroom proxy --memory --port {{ headroom_port }}
+Restart=always
+Environment=PATH=/home/{{ headroom_user }}/.local/bin:/usr/bin:/bin
+
+[Install]
+WantedBy=default.target

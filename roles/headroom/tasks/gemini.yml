@@ -1,0 +1,14 @@
+---
+- name: Ensure Headroom memories in GEMINI.md
+  ansible.builtin.blockinfile:
+    path: "/home/{{ headroom_user }}/.gemini/GEMINI.md"
+    create: true
+    owner: "{{ headroom_user }}"
+    group: "{{ headroom_user }}"
+    mode: '0644'
+    marker: "<!-- {mark} HEADROOM-MEMORIES -->"
+    block: |
+      ## Headroom & RTK (Context Optimization)
+      - Use `rtk` prefix for shell commands to optimize token usage (e.g., `rtk git status`, `rtk ls`).
+      - The Headroom proxy is running at `http://localhost:{{ headroom_port }}`.
+      - Route AI requests through Headroom to enable context compression and cross-agent memory.

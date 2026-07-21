@@ -1,0 +1,9 @@
+---
+- name: Installing Tuxedo driver
+  ansible.builtin.aur:
+    name:
+    state: present
+  loop:
+    - tuxedo-yt6801-dkms
+    - tuxedo-drivers-dkms
+    - tuxedo-control-center-bin

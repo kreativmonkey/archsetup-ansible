@@ -1,0 +1,45 @@
+---
+# tasks file for headroom
+
+- name: Install headroom-ai using uv
+  ansible.builtin.command:
+    cmd: "uv tool install --python {{ headroom_python_version }} '{{ headroom_install_package }}' --force"
+  become: true
+  become_user: "{{ headroom_user }}"
+  changed_when: true  # uv tool install is generally fast, force ensures it's correct
+
+- name: Create systemd user config directory
+  ansible.builtin.file:
+    path: "/home/{{ headroom_user }}/.config/systemd/user"
+    state: directory
+    owner: "{{ headroom_user }}"
+    group: "{{ headroom_user }}"
+    mode: '0755'
+
+- name: Template headroom systemd service
+  ansible.builtin.template:
+    src: headroom.service.j2
+    dest: "/home/{{ headroom_user }}/.config/systemd/user/headroom.service"
+    owner: "{{ headroom_user }}"
+    group: "{{ headroom_user }}"
+    mode: '0644'
+  notify: Restart headroom service
+
+- name: Enable and start headroom service
+  ansible.builtin.systemd:
+    name: headroom.service
+    scope: user
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
+  become_user: "{{ headroom_user }}"
+
+- name: Configure Opencode
+  ansible.builtin.include_tasks: opencode.yml
+
+- name: Configure Cursor Global Rules
+  ansible.builtin.include_tasks: cursor.yml
+
+- name: Update Global Gemini Memories
+  ansible.builtin.include_tasks: gemini.yml
