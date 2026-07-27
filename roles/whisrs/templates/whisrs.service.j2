@@ -1,0 +1,12 @@
+[Unit]
+Description=whisrs — voice-to-text daemon
+After=pipewire.service
+
+[Service]
+Type=dbus
+BusName=dev.y0sif.whisrs.Daemon
+ExecStart=/home/{{ whisrs_user }}/.cargo/bin/whisrsd
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

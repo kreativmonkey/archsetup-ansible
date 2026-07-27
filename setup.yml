@@ -10,9 +10,9 @@
     #- editor
     #- git
     - udev
-    - wireguard
+    #- wireguard
     #- obs-studio
-    #- vim
+    - vim
     - nix
     - direnv
     - cups
@@ -20,5 +20,6 @@
     #- headroom
     - ollama
     - opencode
+    #- whisrs
     #- thinkpad_dock
     # - openvpn

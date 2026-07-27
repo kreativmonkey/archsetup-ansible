@@ -1,0 +1,15 @@
+---
+- name: Restart whisrs service
+  ansible.builtin.systemd:
+    name: whisrs.service
+    scope: user
+    state: restarted
+  become: true
+  become_user: "{{ whisrs_user }}"
+
+- name: Reload udev rules
+  ansible.builtin.command: udevadm control --reload-rules
+  notify: Trigger udev
+
+- name: Trigger udev
+  ansible.builtin.command: udevadm trigger

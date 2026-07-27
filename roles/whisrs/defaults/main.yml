@@ -1,0 +1,7 @@
+---
+# defaults file for whisrs
+whisrs_user: "{{ system_users[0].name }}"
+whisrs_language: "de"
+whisrs_model: "small"
+whisrs_backend: "local-whisper"
+whisrs_notify: true

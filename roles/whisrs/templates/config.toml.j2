@@ -1,0 +1,8 @@
+[general]
+backend = "{{ whisrs_backend }}"
+language = "{{ whisrs_language }}"
+overlay = false
+notify = {{ whisrs_notify | lower }}
+
+[local-whisper]
+model = "{{ whisrs_model }}"

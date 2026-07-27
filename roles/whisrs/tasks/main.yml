@@ -1,0 +1,82 @@
+---
+# tasks file for whisrs
+
+- name: Ensure cargo bin directory exists in PATH for user
+  ansible.builtin.lineinfile:
+    path: "/home/{{ whisrs_user }}/.bashrc"
+    regexp: '^export PATH="\$HOME/\.cargo/bin:'
+    line: 'export PATH="$HOME/.cargo/bin:$PATH"'
+    create: true
+    owner: "{{ whisrs_user }}"
+    group: "{{ whisrs_user }}"
+    mode: '0644'
+
+- name: Install whisrs via cargo
+  ansible.builtin.command:
+    cmd: "cargo install whisrs --locked"
+  become: true
+  become_user: "{{ whisrs_user }}"
+  environment:
+    PATH: "/home/{{ whisrs_user }}/.cargo/bin:{{ ansible_env.PATH }}"
+  register: cargo_install
+  changed_when: "'Installed' in cargo_install.stdout"
+
+- name: Create whisrs config directory
+  ansible.builtin.file:
+    path: "/home/{{ whisrs_user }}/.config/whisrs"
+    state: directory
+    owner: "{{ whisrs_user }}"
+    group: "{{ whisrs_user }}"
+    mode: '0755'
+
+- name: Template whisrs configuration
+  ansible.builtin.template:
+    src: config.toml.j2
+    dest: "/home/{{ whisrs_user }}/.config/whisrs/config.toml"
+    owner: "{{ whisrs_user }}"
+    group: "{{ whisrs_user }}"
+    mode: '0644'
+  notify: Restart whisrs service
+
+- name: Ensure user is in input group for evdev hotkey detection
+  ansible.builtin.user:
+    name: "{{ whisrs_user }}"
+    groups: input
+    append: true
+
+- name: Create uinput udev rule for ydotool
+  ansible.builtin.copy:
+    dest: /etc/udev/rules.d/99-uinput.rules
+    content: |
+      KERNEL=="uinput", MODE="0660", GROUP="input"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload udev rules
+
+- name: Create systemd user config directory
+  ansible.builtin.file:
+    path: "/home/{{ whisrs_user }}/.config/systemd/user"
+    state: directory
+    owner: "{{ whisrs_user }}"
+    group: "{{ whisrs_user }}"
+    mode: '0755'
+
+- name: Template whisrs systemd service
+  ansible.builtin.template:
+    src: whisrs.service.j2
+    dest: "/home/{{ whisrs_user }}/.config/systemd/user/whisrs.service"
+    owner: "{{ whisrs_user }}"
+    group: "{{ whisrs_user }}"
+    mode: '0644'
+  notify: Restart whisrs service
+
+- name: Enable and start whisrs service
+  ansible.builtin.systemd:
+    name: whisrs.service
+    scope: user
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
+  become_user: "{{ whisrs_user }}"
