@@ -1,6 +1,34 @@
+{{ ansible_managed | comment }}
+# Identity for {{ git_base.dir }}/{{ git_identity.folder }}
+# Pulled in by ~/.gitconfig via includeIf — managed by the "git" role.
+
 [user]
-  name  = {{ git_config.name }}
-  email = {{ git_config.email }}
+	name  = {{ git_identity.name }}
+	email = {{ git_identity.email }}
+{% if git_identity.signing_key is defined %}
+	signingkey = {{ git_identity.signing_key }}
+{% endif %}
+{% if git_identity.ssh_key is defined %}
 
 [core]
-  #sshCommand = ~/.ssh/id_rsa_company
+	# IdentitiesOnly stops ssh from offering every key in the agent.
+	sshCommand = ssh -i {{ git_identity.ssh_key }} -o IdentitiesOnly=yes
+{% endif %}
+{% if git_identity.signing_key is defined %}
+
+[gpg]
+	format = {{ git_identity.signing_format | default('ssh') }}
+
+[commit]
+	gpgsign = true
+
+[tag]
+	gpgsign = true
+{% endif %}
+{% for section, entries in git_identity.settings | default({}, true) | dictsort %}
+
+[{{ section }}]
+{% for key, value in entries | dictsort %}
+	{{ key }} = {{ value | lower if value is boolean else value }}
+{% endfor %}
+{% endfor %}

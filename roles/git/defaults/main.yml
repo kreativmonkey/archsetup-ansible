@@ -1,10 +1,172 @@
 ---
 # Variables:
 #    git (dic)
-#    git.configuration (list): List of configuration settings for different folders
-#    git.repositories (list): List of repositories to clone
+#    git.config (list): Per-folder identities (folder, name, email, [ssh_key],
+#                       [signing_key], [signing_format], [settings])
+#    git.repositorys (list): List of repositories to clone
 git_user: "{{ system_users[0].name }}"
 git_base:
   dir: "/home/{{ git_user }}/git"
   owner: "{{ git_user }}"
   group: "{{ git_user }}"
+
+# Per-folder identities, taken from the inventory. Each entry gets a
+# .gitconfig in its folder plus a matching includeIf in the global config.
+git_identities: "{{ git.config | default([]) }}"
+
+# The global config git reads for every repository. Keep this at ~/.gitconfig
+# unless you also remove that file: git reads XDG *and* ~/.gitconfig, and the
+# latter wins, so a stray ~/.gitconfig would silently shadow an XDG config.
+git_global_config: "/home/{{ git_user }}/.gitconfig"
+
+# Identity used in repositories that no includeIf matches (anything outside
+# git_base.dir). Defaults to the first inventory identity.
+git_default_identity:
+  name: "{{ git_identities[0].name | default('') }}"
+  email: "{{ git_identities[0].email | default('') }}"
+
+# Refuse to guess an identity: with useConfigOnly, git aborts a commit instead
+# of falling back to $USER@$HOSTNAME. Only useful with an empty
+# git_default_identity, otherwise the fallback above always applies.
+git_user_config_only: false
+
+# Global git settings, rendered as [section] key = value. Merged recursively
+# with git_settings_extra, so the inventory can add or override single keys
+# without restating the whole dict.
+git_settings:
+  init:
+    # "master" is only still the built-in default for backwards compatibility.
+    defaultBranch: main
+
+  core:
+    editor: "{{ default_editor | default('vim') }}"
+    # Normalise CRLF on commit; the working tree keeps what the repo has.
+    autocrlf: input
+    pager: delta
+    # Cache untracked files in the index — cheap "git status" in large trees.
+    untrackedCache: true
+
+  credential:
+    # Store HTTPS tokens in the Secret Service (gnome-keyring role) instead of
+    # plain text in ~/.git-credentials. Ships with the Arch git package.
+    helper: /usr/lib/git-core/git-credential-libsecret
+
+  push:
+    # Push the current branch to its upstream of the same name, nothing else.
+    default: simple
+    # First push of a new branch no longer needs --set-upstream.
+    autoSetupRemote: true
+    # Ship annotated tags that point at pushed commits.
+    followTags: true
+
+  pull:
+    # Rebase instead of creating a merge commit for every pull.
+    rebase: true
+
+  fetch:
+    # Drop remote-tracking refs and tags that are gone upstream.
+    prune: true
+    pruneTags: true
+    # "git fetch" covers every remote, not just origin.
+    all: true
+
+  rebase:
+    # Rebase with a dirty tree, squash!/fixup! commits are honoured, and
+    # dependent local branches get moved along (updateRefs, git >= 2.38).
+    autoStash: true
+    autoSquash: true
+    updateRefs: true
+
+  merge:
+    # zdiff3 (git >= 2.35) keeps the common context out of the conflict hunks.
+    conflictstyle: zdiff3
+    tool: meld
+
+  mergetool:
+    keepBackup: false
+
+  diff:
+    # histogram produces noticeably more readable hunks than the default myers.
+    algorithm: histogram
+    # Colour moved lines differently from real additions/removals.
+    colorMoved: zebra
+    colorMovedWS: allow-indentation-change
+    # i/ w/ c/ prefixes instead of a/ b/ — tells you what is being compared.
+    mnemonicPrefix: true
+    # Detect renames and copies.
+    renames: copies
+    submodule: log
+
+  interactive:
+    diffFilter: delta --color-only
+
+  delta:
+    navigate: true
+    line-numbers: true
+    hyperlinks: true
+
+  log:
+    date: iso
+
+  commit:
+    # Put the diff into the commit message editor.
+    verbose: true
+
+  status:
+    submoduleSummary: true
+
+  rerere:
+    # Remember conflict resolutions and replay them — pays off on rebases.
+    enabled: true
+    autoUpdate: true
+
+  branch:
+    # Most recent branches first in "git branch".
+    sort: -committerdate
+
+  tag:
+    sort: version:refname
+
+  column:
+    ui: auto
+
+  submodule:
+    recurse: true
+
+  worktree:
+    # "git worktree add <path> <branch>" tracks the matching remote branch.
+    guessRemote: true
+
+  help:
+    # Ask before running the guessed command instead of just doing it.
+    autocorrect: prompt
+
+  transfer:
+    # Verify objects on fetch/push. Set to false if a clone of an old,
+    # malformed repository aborts with an fsck error.
+    fsckObjects: true
+
+# Inventory-level additions/overrides for git_settings.
+git_settings_extra: {}
+
+git_aliases:
+  s: status --short --branch
+  l: log --oneline --graph --decorate -20
+  last: log -1 HEAD --stat
+  unstage: restore --staged
+  amend: commit --amend --no-edit
+  undo: reset --soft HEAD~1
+  wt: worktree
+  sync: "!git fetch --all --prune && git pull"
+  aliases: config --get-regexp '^alias\\.'
+
+# ~/.config/git/ignore — personal, machine-local noise only. Project build
+# artefacts belong in the repository's own .gitignore.
+git_global_ignore_manage: true
+git_global_ignore:
+  - "**/.claude/settings.local.json"
+  - .direnv/
+  - .envrc.local
+  - "*.swp"
+  - "*~"
+  - .DS_Store

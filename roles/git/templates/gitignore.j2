@@ -1,0 +1,6 @@
+{{ ansible_managed | comment }}
+# Global gitignore — managed by the "git" role, edit git_global_ignore instead.
+# Personal/machine-local noise only; build artefacts belong in the repository.
+{% for pattern in git_global_ignore %}
+{{ pattern }}
+{% endfor %}

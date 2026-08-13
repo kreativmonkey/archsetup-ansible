@@ -1,0 +1,15 @@
+galaxy_info:
+  author: Sebastian Preisner
+  description: Install git and lazygit, lay out the ~/git project tree and manage a global git configuration with per-folder identities
+  license: MIT
+  min_ansible_version: "2.12"
+  platforms:
+    - name: ArchLinux
+      versions:
+        - all
+  galaxy_tags:
+    - git
+    - dotfiles
+    - identity
+    - delta
+dependencies: []

@@ -1,0 +1,35 @@
+{{ ansible_managed | comment }}
+# Managed by the "git" role — local changes are overwritten on the next run.
+# Add settings via git_settings_extra / git_aliases in the inventory instead.
+
+[user]
+{% if git_default_identity.name %}
+	name  = {{ git_default_identity.name }}
+{% endif %}
+{% if git_default_identity.email %}
+	email = {{ git_default_identity.email }}
+{% endif %}
+{% if git_user_config_only %}
+	useConfigOnly = true
+{% endif %}
+
+{% for section, entries in git_settings | combine(git_settings_extra, recursive=True) | dictsort %}
+[{{ section }}]
+{% for key, value in entries | dictsort %}
+	{{ key }} = {{ value | lower if value is boolean else value }}
+{% endfor %}
+
+{% endfor %}
+{% if git_aliases %}
+[alias]
+{% for name, command in git_aliases | dictsort %}
+	{{ name }} = {{ command }}
+{% endfor %}
+
+{% endif %}
+# Per-folder identities. The trailing slash matters: only then does git append
+# "**" to the pattern and match the repositories *inside* the folder.
+{% for identity in git_identities %}
+[includeIf "gitdir:{{ git_base.dir }}/{{ identity.folder }}/"]
+	path = {{ git_base.dir }}/{{ identity.folder }}/.gitconfig
+{% endfor %}

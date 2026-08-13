@@ -22,18 +22,49 @@
   become: true
   loop_control:
     loop_var: git_folder
-  loop: "{{ git.config | map(attribute='folder') }}"
+  loop: "{{ git_identities | map(attribute='folder') }}"
 
 - name: Create configuration files for the different project folders
   ansible.builtin.template:
     src: gitconfig.j2
-    dest: "{{ git_base.dir }}/{{ git_config.folder }}/.gitconfig"
+    dest: "{{ git_base.dir }}/{{ git_identity.folder }}/.gitconfig"
     mode: "0644"
     owner: "{{ git_base.owner }}"
     group: "{{ git_base.group }}"
   loop_control:
-    loop_var: git_config
-  loop: "{{ git.config }}"
+    loop_var: git_identity
+    label: "{{ git_identity.folder }}"
+  loop: "{{ git_identities }}"
+
+# Without this the per-folder files above are dead weight: git only reads the
+# system, global and repository config — never a .gitconfig in a parent folder.
+- name: Create the global git configuration with sane defaults
+  ansible.builtin.template:
+    src: gitconfig_global.j2
+    dest: "{{ git_global_config }}"
+    mode: "0644"
+    owner: "{{ git_base.owner }}"
+    group: "{{ git_base.group }}"
+    backup: true
+
+- name: Create the XDG config directory for git
+  ansible.builtin.file:
+    path: "/home/{{ git_user }}/.config/git"
+    state: directory
+    mode: "0755"
+    owner: "{{ git_base.owner }}"
+    group: "{{ git_base.group }}"
+  when: git_global_ignore_manage
+
+- name: Create the global gitignore
+  ansible.builtin.template:
+    src: gitignore.j2
+    dest: "/home/{{ git_user }}/.config/git/ignore"
+    mode: "0644"
+    owner: "{{ git_base.owner }}"
+    group: "{{ git_base.group }}"
+    backup: true
+  when: git_global_ignore_manage
 
 # TODO: Use sshd role with add_config for add specific host configuration
 # - name: Setup ssh workeround for gitlab.puzzle.ch
@@ -47,10 +78,10 @@
 #    - "Host ssh.gitlab.puzzle.ch"
 #    - "  UpdateHostKeys no"
 
-#- name: Clone neccessary git projects to the corresponding folders
+# - name: Clone neccessary git projects to the corresponding folders
 #  ansible.builtin.include_role:
 #    name: git
 #    tasks_from: clone
 #  loop_control:
 #    loop_var: repository
-#  loop: "{{ git.repositories }}"
+#  loop: "{{ git.repositorys }}"
