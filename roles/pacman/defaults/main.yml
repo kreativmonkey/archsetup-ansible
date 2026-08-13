@@ -1,9 +1,23 @@
 ---
 # defaults file for pacman
-pacman:
-  parallel_downloads: 10
-  repos:
-    - core
-    - extra
-    - community
-    - multilib
+
+# Concurrent package downloads. pacman's own default is 1, which leaves a fast
+# link idle while it waits on one server at a time.
+pacman_parallel_downloads: 10
+
+# Repositories enabled in /etc/pacman.conf. Uncommenting a repository is all
+# this does — the mirrorlist include comes with it.
+pacman_repos:
+  - core
+  - extra
+  - multilib
+
+# Cosmetics that change what a pacman run tells you: colour, the pac-man
+# progress animation, and a full list of the packages a transaction touches.
+pacman_color: true
+pacman_ilovecandy: true
+pacman_verbose_pkg_lists: true
+
+# Weekly paccache run that keeps the last N versions of each package in
+# /var/cache/pacman/pkg. Without it the cache grows without bound.
+pacman_paccache: true

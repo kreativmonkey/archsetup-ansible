@@ -1,0 +1,68 @@
+---
+# Pulling a model and creating a customised one are not idempotent operations —
+# `ollama pull` and `ollama create` always succeed and always report success.
+# So the role asks what is there first and only acts on the difference.
+
+- name: Read the models the host already has
+  ansible.builtin.command:
+    cmd: ollama list
+  register: __ollama_installed
+  changed_when: false
+  check_mode: false
+
+- name: Pull the configured models
+  ansible.builtin.command:
+    cmd: ollama pull {{ __ollama_model }}
+  become: true
+  changed_when: true
+  loop_control:
+    loop_var: __ollama_model
+  loop: "{{ ollama_models }}"
+  when: __ollama_model not in __ollama_installed.stdout
+
+- name: Create the modelfile directory
+  ansible.builtin.file:
+    path: "{{ __ollama_modelfile_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+# The modelfile on disk is the state that can be compared. Writing it first and
+# running `ollama create` only for the ones that changed is what makes a second
+# run quiet.
+- name: Write the modelfiles
+  ansible.builtin.template:
+    src: modelfile.j2
+    dest: "{{ __ollama_modelfile_path }}/{{ __ollama_customization.name | replace(':', '-') }}"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  register: __ollama_modelfiles
+  loop_control:
+    loop_var: __ollama_customization
+    label: "{{ __ollama_customization.name }}"
+  loop: "{{ ollama_model_customizations }}"
+
+# Filtering the loop rather than guarding with `when: ... is changed`: the
+# results are zipped back onto their input, so only the entries whose modelfile
+# actually changed are passed to `ollama create`.
+- name: Create the customised models
+  ansible.builtin.command:
+    cmd: >-
+      ollama create {{ __ollama_customization.name }}
+      -f {{ __ollama_modelfile_path }}/{{
+        __ollama_customization.name | replace(':', '-') }}
+  become: true
+  changed_when: true
+  loop_control:
+    loop_var: __ollama_customization
+    label: "{{ __ollama_customization.name }}"
+  loop: >-
+    {{ ollama_model_customizations
+       | zip(__ollama_modelfiles.results)
+       | selectattr('1.changed')
+       | map(attribute='0')
+       | list }}

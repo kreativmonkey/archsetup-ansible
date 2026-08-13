@@ -1,8 +1,12 @@
 ---
-# Benutzer, für die direnv eingerichtet wird (Shell-Hooks + Config)
+# defaults file for direnv
+
+# Users direnv is set up for: shell hooks plus ~/.config/direnv.
 direnv_users: "{{ system_users | map(attribute='name') | list }}"
 
-# nix-direnv: gecachtes `use flake` — Dev-Shells überleben GC und laden schnell
+# nix-direnv gives `use flake` a cache, so dev shells survive a nix garbage
+# collect and load without rebuilding. There is no Arch package, hence the
+# direnvrc straight from upstream.
 direnv_nix_direnv: true
 direnv_nix_direnv_version: "3.1.1"
 

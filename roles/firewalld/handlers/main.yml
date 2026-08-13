@@ -6,4 +6,5 @@
 - name: Reload firewalld
   ansible.builtin.command:
     cmd: firewall-cmd --reload
+  become: true
   changed_when: true

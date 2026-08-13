@@ -1,7 +1,21 @@
 ---
 # defaults file for whisrs
+
+# User whisrs is installed and run for. It is a user service: the hotkey and
+# the typing both need the graphical session.
 whisrs_user: "{{ system_users[0].name }}"
-whisrs_language: "de"
-whisrs_model: "small"
-whisrs_backend: "local-whisper"
+
+# Transcription language and whisper model size. Bigger is more accurate and
+# slower; "small" is the point where German dictation becomes usable.
+whisrs_language: de
+whisrs_model: small
+
+# Transcription backend. local-whisper keeps the audio on this machine.
+whisrs_backend: local-whisper
+
+# Desktop notification when a transcription starts and finishes.
 whisrs_notify: true
+
+# Hotkey that toggles dictation. Evaluated by whisrs itself through evdev,
+# which is why the user has to be in the input group.
+whisrs_hotkey: "Super+Ctrl"

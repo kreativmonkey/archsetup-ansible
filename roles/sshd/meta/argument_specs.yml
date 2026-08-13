@@ -1,0 +1,98 @@
+---
+argument_specs:
+  main:
+    short_description: Install openssh, generate a key pair and manage ssh_config stanzas
+    description:
+      - >-
+        Central role for the client side of SSH. It owns ~/.ssh — the key pair
+        and one marked block per host in ~/.ssh/config.
+      - >-
+        It does not manage the ssh agent. That belongs to the C(gnome_keyring)
+        role, which exports SSH_AUTH_SOCK and enables ssh-agent.socket.
+    options:
+      sshd_user:
+        type: str
+        required: false
+        description:
+          - User the key pair and the ssh_config belong to.
+      sshd_group:
+        type: str
+        required: false
+        description:
+          - Group that owns ~/.ssh. Defaults to the user's primary group.
+      sshd_keyfile:
+        type: str
+        required: false
+        default: id_ed25519
+        description:
+          - Key file name inside ~/.ssh.
+      sshd_generate_key:
+        type: bool
+        required: false
+        default: true
+        description:
+          - >-
+            Generate a key pair. Turn it off when the keys come from a password
+            manager.
+      sshd_hosts:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description:
+          - Host stanzas to write, in the shape C(add_host) expects.
+
+  keygen:
+    short_description: Generate an ed25519 key pair for the user
+    description:
+      - >-
+        Idempotent: an existing key of the same type is left alone, so a key
+        that is already in an authorized_keys somewhere is never overwritten.
+      - Sets the fact C(sshd_public_key) with the public key.
+    options:
+      sshd_user:
+        type: str
+        required: false
+        description:
+          - User the key pair is generated for.
+      sshd_keyfile:
+        type: str
+        required: false
+        default: id_ed25519
+        description:
+          - Key file name inside ~/.ssh.
+
+  add_host:
+    short_description: Write a single host stanza into the user's ssh_config
+    description:
+      - >-
+        Entry point for other roles. ~/.ssh/config belongs to the user, so this
+        writes one marked block per host and never the whole file. The result is
+        checked with C(ssh -G) before it is kept.
+    options:
+      sshd_host:
+        type: dict
+        required: true
+        description:
+          - The host stanza to write.
+        options:
+          name:
+            type: str
+            required: true
+            description:
+              - >-
+                Value of the C(Host) directive, and the identity of the marked
+                block.
+          options:
+            type: dict
+            required: true
+            description:
+              - >-
+                ssh_config keywords for this host, for example
+                C({UpdateHostKeys: 'no'}).
+          state:
+            type: str
+            required: false
+            default: present
+            choices: [present, absent]
+            description: Whether the block should exist.

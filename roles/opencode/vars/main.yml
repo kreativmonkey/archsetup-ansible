@@ -1,0 +1,14 @@
+---
+# vars file for opencode
+
+# Language servers opencode drives, all from the official repositories. The
+# names here have to match the commands in opencode_lsp.
+__opencode_lsp_packages:
+  - yaml-language-server
+  - pyright
+  - rust-analyzer
+  - gopls
+  - bash-language-server
+  - typescript-language-server
+  - npm
+  - ripgrep

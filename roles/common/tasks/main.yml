@@ -1,38 +1,17 @@
 ---
 # tasks file for common
-- name: Installiere Puzzle typeset
-  ansible.builtin.package:
-    name: "{{ _common_schrift }}"
-    state: present
-  loop_control:
-    loop_var: _common_schrift
-  loop:
-    - ttf-roboto
 
-- name: Installing common packages
-  ansible.builtin.package:
-    name: "{{ _common_packages }}"
+# One transaction instead of one per package: pacman resolves the whole set at
+# once, which is both faster and what makes a second run report no change.
+- name: Install the base package set
+  community.general.pacman:
+    name: "{{ __common_packages }}"
     state: present
-  loop_control:
-    loop_var: _common_packages
-  loop:
-    - "{{ common_packages_default }}"
+  become: true
 
-- name: Install custom packages
-  ansible.builtin.package:
-    name: "{{ _common_custom_packages }}"
+- name: Install the additional packages of this host
+  community.general.pacman:
+    name: "{{ common_custom_packages }}"
     state: present
-  loop_control:
-    loop_var: _common_custom_packages
-  loop: "{{ common_custom_packages if common_custom_packages is iterable else [] }}"
-
-- name: Installing german dictionarys for spell checking
-  ansible.builtin.package:
-    name: "{{ _common_spellcheck }}"
-    state: present
-  loop_control:
-    loop_var: _common_spellcheck
-  loop:
-    - hunspell
-    - hunspell-de
-    - hunspell-en_us
+  become: true
+  when: common_custom_packages | length > 0

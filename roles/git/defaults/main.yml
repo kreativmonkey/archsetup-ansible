@@ -1,18 +1,29 @@
 ---
-# Variables:
-#    git (dic)
-#    git.config (list): Per-folder identities (folder, name, email, [ssh_key],
-#                       [signing_key], [signing_format], [settings])
-#    git.repositorys (list): List of repositories to clone
+# defaults file for git
+
 git_user: "{{ system_users[0].name }}"
 git_base:
   dir: "/home/{{ git_user }}/git"
   owner: "{{ git_user }}"
   group: "{{ git_user }}"
 
-# Per-folder identities, taken from the inventory. Each entry gets a
-# .gitconfig in its folder plus a matching includeIf in the global config.
-git_identities: "{{ git.config | default([]) }}"
+# Per-folder identities. Each entry gets a .gitconfig in its folder plus a
+# matching includeIf in the global config. Declared in the inventory as
+# git_identities — it used to read the unprefixed git.config dict, which
+# ansible-lint rejects and which collides with the `git` name everywhere else.
+git_identities: []
+
+# Repositories cloned into git_base.dir/<forge>/<name>. Only cloned when
+# missing; an existing checkout is left alone.
+git_repositories: []
+
+# Branch or tag a clone is checked out at. HEAD means the remote default.
+git_repository_version: HEAD
+
+# ssh_config stanzas the forges need, handed to the sshd role. Use this for a
+# forge that needs a client-side quirk, e.g. {name: git.example.org,
+# options: {UpdateHostKeys: "no"}}.
+git_ssh_hosts: []
 
 # The global config git reads for every repository. Keep this at ~/.gitconfig
 # unless you also remove that file: git reads XDG *and* ~/.gitconfig, and the

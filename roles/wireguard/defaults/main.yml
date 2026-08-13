@@ -1,27 +1,17 @@
 ---
-wireguard_address: "10.0.0.1/24"
-wireguard_port: 51820
-wireguard_interface: "wg0"
-wireguard_eth: "eth0"
-wgdashboard_port: 10086
+# defaults file for wireguard
 
-# pudelab client tunnel (roles/wireguard/templates/pudelab.conf.j2).
-# All identifying / secret values are pulled from a single Bitwarden item
-# named "WireGuard pudelab" (custom fields) so nothing infra-specific lands in
-# git. Adjust the item name / field names below to match your vault.
-pudelab_address: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='Address') | first }}"
-pudelab_public_key: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='PublicKey') | first }}"
-pudelab_preshared_key: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='PresharedKey') | first }}"
-pudelab_allowed_ips: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='AllowedIPs') | first }}"
-pudelab_endpoint: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='Endpoint') | first }}"
+# Tunnels to configure, one config file each. Empty by default on purpose: an
+# interface definition is host data, so it belongs in the inventory, and every
+# identifying or secret value in it should come from a lookup rather than from
+# a literal in this repository.
+#
+# See README.md for the shape and for a Bitwarden-backed example.
+wireguard_interfaces: []
 
-# Define peers as a list of dicts
-wireguard_peers: []
-# Example:
-# wireguard_peers:
-#   - public_key: "pubkey1"
-#     allowed_ips: "10.0.0.2/32"
-#     endpoint: "peer1.example.com:51820"
-#     persistent_keepalive: 25
-#   - public_key: "pubkey2"
-#     allowed_ips: "10.0.0.3/32"
+# Where the config and the key pairs live. Root only, 0600.
+wireguard_config_dir: /etc/wireguard
+
+# Enable IPv4 forwarding. Needed when this host routes for its peers, i.e. runs
+# as a server or an exit node. A plain client does not need it.
+wireguard_forward_ipv4: false

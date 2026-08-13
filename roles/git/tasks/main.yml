@@ -1,36 +1,34 @@
 ---
 # tasks file for git
-- name: Installing git
-  ansible.builtin.package:
-    name: git
-    state: present
 
-- name: Installing lazygit as terminal helper
-  ansible.builtin.package:
-    name: lazygit
+- name: Install git and lazygit
+  community.general.pacman:
+    name:
+      - git
+      - lazygit
     state: present
   become: true
 
-- name: Create git project directory structure
+- name: Create the project directory per forge
   ansible.builtin.file:
-    path: "{{ git_base.dir }}/{{ git_folder }}"
+    path: "{{ git_base.dir }}/{{ __git_folder }}"
+    state: directory
     owner: "{{ git_base.owner }}"
     group: "{{ git_base.group }}"
     mode: "0755"
-    state: directory
-    recurse: true
   become: true
   loop_control:
-    loop_var: git_folder
-  loop: "{{ git_identities | map(attribute='folder') }}"
+    loop_var: __git_folder
+  loop: "{{ git_identities | map(attribute='folder') | list }}"
 
-- name: Create configuration files for the different project folders
+- name: Write the identity configuration per forge
   ansible.builtin.template:
     src: gitconfig.j2
     dest: "{{ git_base.dir }}/{{ git_identity.folder }}/.gitconfig"
-    mode: "0644"
     owner: "{{ git_base.owner }}"
     group: "{{ git_base.group }}"
+    mode: "0644"
+  become: true
   loop_control:
     loop_var: git_identity
     label: "{{ git_identity.folder }}"
@@ -38,50 +36,54 @@
 
 # Without this the per-folder files above are dead weight: git only reads the
 # system, global and repository config — never a .gitconfig in a parent folder.
-- name: Create the global git configuration with sane defaults
+- name: Write the global git configuration
   ansible.builtin.template:
     src: gitconfig_global.j2
     dest: "{{ git_global_config }}"
-    mode: "0644"
     owner: "{{ git_base.owner }}"
     group: "{{ git_base.group }}"
+    mode: "0644"
     backup: true
+  become: true
 
 - name: Create the XDG config directory for git
   ansible.builtin.file:
-    path: "/home/{{ git_user }}/.config/git"
+    path: "{{ __git_xdg_config_path }}"
     state: directory
-    mode: "0755"
     owner: "{{ git_base.owner }}"
     group: "{{ git_base.group }}"
+    mode: "0755"
+  become: true
   when: git_global_ignore_manage
 
-- name: Create the global gitignore
+- name: Write the global gitignore
   ansible.builtin.template:
     src: gitignore.j2
-    dest: "/home/{{ git_user }}/.config/git/ignore"
-    mode: "0644"
+    dest: "{{ __git_xdg_config_path }}/ignore"
     owner: "{{ git_base.owner }}"
     group: "{{ git_base.group }}"
+    mode: "0644"
     backup: true
+  become: true
   when: git_global_ignore_manage
 
-# TODO: Use sshd role with add_config for add specific host configuration
-# - name: Setup ssh workeround for gitlab.puzzle.ch
-#  ansible.builtin.lineinfile:
-#    path: "/home/sebastian/.ssh/config"
-#    line: "{{ _gitlab_line }}"
-#    state: present
-#  loop_control:
-#    loop_var: _gitlab_line
-#  loop:
-#    - "Host ssh.gitlab.puzzle.ch"
-#    - "  UpdateHostKeys no"
+# ~/.ssh/config belongs to the sshd role. A forge that needs a stanza — say a
+# gitlab that rotates its host keys — is declared in the inventory and handed
+# over, never written from here.
+- name: Write the ssh_config stanzas the forges need
+  ansible.builtin.include_role:
+    name: sshd
+    tasks_from: add_host
+  vars:
+    sshd_user: "{{ git_user }}"
+    sshd_host: "{{ __git_ssh_host }}"
+  loop_control:
+    loop_var: __git_ssh_host
+    label: "{{ __git_ssh_host.name }}"
+  loop: "{{ git_ssh_hosts }}"
 
-# - name: Clone neccessary git projects to the corresponding folders
-#  ansible.builtin.include_role:
-#    name: git
-#    tasks_from: clone
-#  loop_control:
-#    loop_var: repository
-#  loop: "{{ git.repositorys }}"
+- name: Clone the configured repositories
+  ansible.builtin.include_tasks: clone.yml
+  loop_control:
+    loop_var: git_repository
+  loop: "{{ git_repositories }}"

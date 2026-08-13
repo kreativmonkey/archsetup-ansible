@@ -1,0 +1,45 @@
+---
+# fuse-overlayfs gives an unprivileged user a copy-on-write storage driver,
+# slirp4netns gives it a network stack. Without both, rootless podman falls back
+# to vfs and has no networking.
+- name: Install the rootless dependencies
+  community.general.pacman:
+    name:
+      - fuse-overlayfs
+      - slirp4netns
+    state: present
+  become: true
+
+- name: Allow unprivileged user namespaces
+  ansible.builtin.include_role:
+    name: sysctl
+    tasks_from: set
+  vars:
+    sysctl_setting:
+      name: kernel.unprivileged_userns_clone
+      value: 1
+
+- name: Reserve the subordinate id ranges for rootless podman
+  ansible.builtin.include_role:
+    name: system_user
+    tasks_from: add_subid
+  vars:
+    system_user_subid:
+      name: "{{ __podman_rootless_user }}"
+  loop_control:
+    loop_var: __podman_rootless_user
+  loop: "{{ podman_rootless_users }}"
+
+# podman caches the range in the user's storage configuration, so a new range
+# only takes effect after a migrate. Guarded by the fact system_user sets,
+# not by `is changed` — the change happened inside the other role.
+- name: Propagate the subordinate ids into the podman user storage
+  ansible.builtin.command:
+    cmd: podman system migrate
+  become: true
+  become_user: "{{ __podman_rootless_user }}"
+  changed_when: true
+  loop_control:
+    loop_var: __podman_rootless_user
+  loop: "{{ podman_rootless_users }}"
+  when: system_user_subid_changed | default(false)

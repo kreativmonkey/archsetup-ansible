@@ -1,45 +1,26 @@
 ---
-- name: Process git repositories list
-  vars:
-    repo_url: "{{ repository }}"
+# Entry point: clone one repository into <git_base.dir>/<forge>/<name>. The
+# forge directory is derived from the URL, so a clone lands where the includeIf
+# patterns of the global config expect it and picks up the right identity.
 
-    # Step 1: Detect FQDN / domain from the repo URL
-    # Works for https, ssh://, and git@domain: syntax
-    repo_domain: >-
-      {% if '://' in repo_url %}
-        {{ (repo_url.split('://')[1]).split('/')[0].split(':')[0] }}
-      {% elif '@' in repo_url and ':' in repo_url %}
-        {{ (repo_url.split('@')[1]).split(':')[0] }}
-      {% else %}
-        unknown.domain
-      {% endif %}
+- name: Create the forge directory for {{ __git_repo_domain }}
+  ansible.builtin.file:
+    path: "{{ git_base.dir }}/{{ __git_repo_domain }}"
+    state: directory
+    owner: "{{ git_base.owner }}"
+    group: "{{ git_base.group }}"
+    mode: "0755"
+  become: true
 
-    # Step 2: Extract project/repository name without ".git"
-    repo_name: "{{ repo_url | regex_replace('.*/', '') | regex_replace('\\.git$', '') }}"
-
-    # Step 3: Build target path
-    target_path: "{{ git_base_dir }}/{{ repo_domain }}/{{ repo_name }}"
-
-  block:
-
-    - name: Ensure target domain directory exists
-      ansible.builtin.file:
-        path: "{{ git_base_folder }}/{{ repo_domain }}"
-        state: directory
-        owner: "{{ git_base_owner }}"
-        group: "{{ git_base_group }}"
-        mode: '0755'
-        recurse: true
-      become: true
-
-    - name: Clone repository into target path
-      ansible.builtin.git:
-        repo: "{{ repo_url }}"
-        dest: "{{ target_path }}"
-        accept_hostkey: true
-        update: false
-      register: git_result
-
-    - name: Show cloning result
-      ansible.builtin.debug:
-        msg: "Repo {{ repo_name }} cloned/updated at {{ target_path }} from {{ repo_domain }}"
+# update: false — this clones what is missing and then leaves the checkout
+# alone. Pulling somebody's working tree from a config run is not this role's
+# business.
+- name: Clone the repository {{ git_repository }}
+  ansible.builtin.git:
+    repo: "{{ git_repository }}"
+    dest: "{{ git_base.dir }}/{{ __git_repo_domain }}/{{ __git_repo_name }}"
+    version: "{{ git_repository_version }}"
+    accept_hostkey: true
+    update: false
+  become: true
+  become_user: "{{ git_base.owner }}"

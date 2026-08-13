@@ -1,0 +1,61 @@
+---
+argument_specs:
+  main:
+    short_description: Run the headroom context compression proxy
+    description:
+      - >-
+        Installs headroom with uv, runs it as a systemd user service and
+        registers it with the agents on this host.
+      - >-
+        The opencode registration goes through the C(opencode) role, which owns
+        opencode.json.
+    options:
+      headroom_user:
+        type: str
+        required: false
+        description:
+          - User the proxy runs as.
+      headroom_port:
+        type: int
+        required: false
+        default: 8787
+        description:
+          - Loopback port the proxy listens on.
+      headroom_python_version:
+        type: str
+        required: false
+        default: "3.13"
+        description:
+          - Interpreter uv builds the tool environment with.
+      headroom_install_package:
+        type: str
+        required: false
+        default: "headroom-ai[all]"
+        description:
+          - Package specification uv installs.
+      headroom_force_reinstall:
+        type: bool
+        required: false
+        default: false
+        description:
+          - >-
+            Reinstall even when uv already has the tool. The install is not
+            cheap, so it normally only runs when the tool is missing.
+      headroom_configure_opencode:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Register the proxy and the MCP server with the opencode role.
+      headroom_configure_cursor:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Write the RTK instructions into ~/.cursorrules.
+      headroom_configure_gemini:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Write the headroom memories into ~/.gemini/GEMINI.md.

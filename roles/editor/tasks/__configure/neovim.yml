@@ -1,0 +1,11 @@
+---
+# Only what $EDITOR needs. The Neovim *configuration* belongs to the vim role,
+# which installs a distribution into ~/.config/nvim — this role must not touch
+# that.
+- name: Install the neovim plugins from the repositories
+  community.general.pacman:
+    name:
+      - vim-plug
+      - vim-ansible
+    state: present
+  become: true

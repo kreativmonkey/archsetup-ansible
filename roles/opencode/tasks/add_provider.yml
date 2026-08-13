@@ -1,0 +1,13 @@
+---
+# Entry point for roles that expose a model endpoint opencode should know about.
+# The whole file is re-rendered from the declared configuration plus every
+# registered addition, so calls accumulate instead of overwriting each other.
+
+- name: Register the provider {{ opencode_provider.name }}
+  ansible.builtin.set_fact:
+    opencode_providers_extra: >-
+      {{ opencode_providers_extra
+         | combine({opencode_provider.name: opencode_provider.config}) }}
+
+- name: Write the opencode configuration
+  ansible.builtin.include_tasks: __config/render.yml

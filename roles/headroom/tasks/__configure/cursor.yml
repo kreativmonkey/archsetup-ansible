@@ -1,0 +1,26 @@
+---
+# ~/.cursorrules belongs to the user, so this role owns a marked block in it
+# rather than the whole file.
+- name: Write the RTK instructions into the cursor rules
+  ansible.builtin.blockinfile:
+    path: "/home/{{ headroom_user }}/.cursorrules"
+    create: true
+    owner: "{{ headroom_user }}"
+    group: "{{ headroom_user }}"
+    mode: "0644"
+    marker: "<!-- {mark} headroom:rtk-instructions -->"
+    block: |
+      # RTK (Rust Token Killer) — token-optimised commands
+
+      Prefix shell commands with `rtk`. It cuts context usage by 60-90% with no
+      change in behaviour.
+
+      ```bash
+      rtk git status          rtk git diff            rtk git log
+      rtk ls <path>           rtk read <file>         rtk grep <pattern>
+      rtk find <pattern>      rtk diff <file>
+      rtk pytest tests/       rtk cargo test          rtk test <cmd>
+      ```
+
+      Headroom expands these on first use.
+  become: true

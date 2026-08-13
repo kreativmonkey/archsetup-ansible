@@ -1,24 +1,29 @@
 ---
 # tasks file for podman
+
+- name: Install podman
+  community.general.pacman:
+    name: podman
+    state: present
+  become: true
+
+- name: Replace docker with podman
+  ansible.builtin.include_tasks: __configure/replace_docker.yml
+  when: podman_replace_docker
+
+# Only meaningful next to an installed cockpit, so the role asks the package
+# database instead of guessing.
 - name: Gather the package facts
   ansible.builtin.package_facts:
     manager: auto
 
-- name: Installing podman Package
-  ansible.builtin.package:
-    name: podman
-    state: present
-
-- name: Replace Docker
-  ansible.builtin.import_tasks: replace_docker.yml
-  when: podman_replace_docker
-
-- name: Installing cockpit extension for podman
-  ansible.builtin.package:
+- name: Install the cockpit extension for podman
+  community.general.pacman:
     name: cockpit-podman
     state: present
+  become: true
   when: "'cockpit' in ansible_facts.packages"
 
-- name: Setup rootless podman
-  ansible.builtin.import_tasks: rootless.yml
+- name: Set up rootless containers
+  ansible.builtin.include_tasks: __configure/rootless.yml
   when: podman_rootless

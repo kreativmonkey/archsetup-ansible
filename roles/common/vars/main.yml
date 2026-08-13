@@ -1,11 +1,14 @@
 ---
 # vars file for common
-common_packages_default:
-  # Editors
+
+# The base package set of this workstation. Internal on purpose: the set is
+# what the role *is*, and it is not meant to be replaced from the outside.
+# Additions go through common_custom_packages.
+__common_packages:
+  # editors
   - helix
   - neovim
-  # - visual-studio-code-bin Aktuell nur AUR!
-  # Terminal helper
+  # terminal helpers
   - eza
   - yazi
   - htop
@@ -26,22 +29,29 @@ common_packages_default:
   - mcfly
   - ripgrep
   - direnv
-  ## - cheat # Aktuell nur AUR!
-  # Backup/Restore
+  # backup and restore
   - chezmoi
   - restic
-  ## - ventoy # Aktuell nur AUR!
   - vorta
   - seahorse
   - rsync
-  # Networking
+  # networking
   - nmap
   - tcpdump
-  # Virtualisation
+  # virtualisation
   - virt-viewer
-  # Office
+  # office
   - evolution
   - xournalpp
   - nextcloud-client
   - libreoffice-fresh
-  #- libreoffice-fresh-de
+  # fonts
+  - ttf-roboto
+  # spell checking
+  - hunspell
+  - hunspell-de
+  - hunspell-en_us
+
+# Only in the AUR, so out of reach for community.general.pacman. Listed here so
+# the gap is visible instead of hidden in a commented-out line:
+#   visual-studio-code-bin, cheat, ventoy, libreoffice-fresh-de

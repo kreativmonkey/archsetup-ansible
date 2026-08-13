@@ -1,6 +1,25 @@
 ---
 # defaults file for headroom
+
+# User the proxy runs as. It is a user service, and the memory store lives in
+# that user's home.
 headroom_user: "{{ system_users[0].name }}"
+
+# Port the local proxy listens on. Loopback only.
 headroom_port: 8787
+
+# Interpreter uv builds the tool environment with, and the package it installs.
 headroom_python_version: "3.13"
 headroom_install_package: "headroom-ai[all]"
+
+# Reinstall even when uv already has the tool. The install is not cheap, so it
+# normally only runs when the tool is missing.
+headroom_force_reinstall: false
+
+# Register headroom as an opencode provider and MCP server. Goes through the
+# opencode role, which owns opencode.json.
+headroom_configure_opencode: true
+
+# Drop the RTK usage instructions into the global config of these agents.
+headroom_configure_cursor: true
+headroom_configure_gemini: true

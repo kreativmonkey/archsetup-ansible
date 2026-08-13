@@ -1,0 +1,70 @@
+---
+# Everything direnv needs in one user's home. Private: called from main.yml
+# once per entry in direnv_users, never from outside the role.
+
+- name: Create the direnv config directory of {{ __direnv_user }}
+  ansible.builtin.file:
+    path: "/home/{{ __direnv_user }}/.config/direnv"
+    state: directory
+    owner: "{{ __direnv_user }}"
+    group: "{{ __direnv_user }}"
+    mode: "0755"
+  become: true
+
+- name: Write direnv.toml for {{ __direnv_user }}
+  ansible.builtin.copy:
+    content: "{{ direnv_settings }}"
+    dest: "/home/{{ __direnv_user }}/.config/direnv/direnv.toml"
+    owner: "{{ __direnv_user }}"
+    group: "{{ __direnv_user }}"
+    mode: "0644"
+  become: true
+
+- name: Load nix-direnv from the direnvrc of {{ __direnv_user }}
+  ansible.builtin.copy:
+    content: |
+      {{ ansible_managed | comment }}
+      source {{ __direnv_nix_direnv_path }}/direnvrc
+    dest: "/home/{{ __direnv_user }}/.config/direnv/direnvrc"
+    owner: "{{ __direnv_user }}"
+    group: "{{ __direnv_user }}"
+    mode: "0644"
+  become: true
+  when: direnv_nix_direnv
+
+- name: Create the fish conf.d directory of {{ __direnv_user }}
+  ansible.builtin.file:
+    path: "/home/{{ __direnv_user }}/.config/fish/conf.d"
+    state: directory
+    owner: "{{ __direnv_user }}"
+    group: "{{ __direnv_user }}"
+    mode: "0755"
+  become: true
+
+# Own file in conf.d, so this role owns it outright instead of editing a
+# config.fish it shares with the user.
+- name: Enable the direnv hook for fish of {{ __direnv_user }}
+  ansible.builtin.copy:
+    content: |
+      {{ ansible_managed | comment }}
+      if type -q direnv
+          direnv hook fish | source
+      end
+    dest: "/home/{{ __direnv_user }}/.config/fish/conf.d/direnv.fish"
+    owner: "{{ __direnv_user }}"
+    group: "{{ __direnv_user }}"
+    mode: "0644"
+  become: true
+
+# ~/.bashrc has no drop-in directory and belongs to the user, so a single
+# managed line is the most this role may take.
+- name: Enable the direnv hook for bash of {{ __direnv_user }}
+  ansible.builtin.lineinfile:
+    path: "/home/{{ __direnv_user }}/.bashrc"
+    regexp: '^\s*command -v direnv .*direnv hook bash'
+    line: 'command -v direnv >/dev/null && eval "$(direnv hook bash)"'
+    create: true
+    owner: "{{ __direnv_user }}"
+    group: "{{ __direnv_user }}"
+    mode: "0644"
+  become: true

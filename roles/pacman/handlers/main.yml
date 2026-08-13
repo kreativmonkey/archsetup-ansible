@@ -1,5 +1,14 @@
 ---
 # handlers file for pacman
-- name: Update pacman cache
-  ansible.builtin.command:
-    cmd: pacman -Sy
+
+# A newly enabled repository has no package list yet, so the next role that
+# installs something would fail on "target not found".
+- name: Update the pacman cache
+  community.general.pacman:
+    update_cache: true
+  become: true
+
+- name: Reload systemd
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  become: true

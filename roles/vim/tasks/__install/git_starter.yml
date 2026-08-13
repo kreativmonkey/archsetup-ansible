@@ -1,0 +1,35 @@
+---
+# Shared install flow for the git-clone based distributions (astronvim,
+# lazyvim). Clones the starter template into ~/.config/nvim, hands it to the
+# target user and drops the upstream .git so the config becomes the user's own.
+#
+# Dropping .git is also why this file must not run on every play: without a
+# checkout the git module below cannot recognise an existing install and would
+# clone again. main.yml gates it on __vim_rebuild.
+
+- name: Clone the starter for {{ vim_distro }}
+  ansible.builtin.git:
+    repo: "{{ __vim_repos[vim_distro] }}"
+    dest: "{{ __vim_config_path }}"
+    version: "{{ vim_starter_version }}"
+    depth: 1
+    single_branch: true
+  become: true
+  become_user: "{{ vim_user }}"
+
+- name: Remove the upstream .git directory of {{ vim_distro }}
+  ansible.builtin.file:
+    path: "{{ __vim_config_path }}/.git"
+    state: absent
+  become: true
+
+# Written last, so it is only present once the install has actually
+# succeeded. A failed clone leaves no marker and the next run retries.
+- name: Record the installed distribution
+  ansible.builtin.copy:
+    content: "{{ vim_distro }}\n"
+    dest: "{{ __vim_state_file }}"
+    owner: "{{ vim_user }}"
+    group: "{{ vim_user }}"
+    mode: "0644"
+  become: true

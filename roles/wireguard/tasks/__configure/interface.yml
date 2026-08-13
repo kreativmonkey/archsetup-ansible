@@ -1,0 +1,59 @@
+---
+# One tunnel: its key pair and its config file. Private include, looped from
+# main.yml once per entry in wireguard_interfaces.
+
+- name: Create the wireguard configuration directory
+  ansible.builtin.file:
+    path: "{{ wireguard_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  become: true
+
+# `wg genkey` has no state-aware module, so this needs both `creates` and
+# pipefail: without pipefail the shell reports the exit status of `wg pubkey`
+# and a failing genkey passes silently.
+- name: Generate the key pair for {{ wireguard_interface.name }}
+  ansible.builtin.shell:
+    cmd: >-
+      set -o pipefail &&
+      wg genkey
+      | tee {{ __wireguard_private_key_file }}
+      | wg pubkey > {{ __wireguard_public_key_file }}
+    creates: "{{ __wireguard_private_key_file }}"
+    executable: /bin/bash
+  become: true
+
+- name: Restrict the key pair of {{ wireguard_interface.name }}
+  ansible.builtin.file:
+    path: "{{ __wireguard_key_file }}"
+    owner: root
+    group: root
+    mode: "0600"
+  become: true
+  loop_control:
+    loop_var: __wireguard_key_file
+  loop:
+    - "{{ __wireguard_private_key_file }}"
+    - "{{ __wireguard_public_key_file }}"
+
+- name: Read the private key of {{ wireguard_interface.name }}
+  ansible.builtin.slurp:
+    src: "{{ __wireguard_private_key_file }}"
+  become: true
+  register: __wireguard_private_key_content
+  no_log: true
+
+- name: Write the configuration for {{ wireguard_interface.name }}
+  ansible.builtin.template:
+    src: interface.conf.j2
+    dest: "{{ wireguard_config_dir }}/{{ wireguard_interface.name }}.conf"
+    owner: root
+    group: root
+    mode: "0600"
+  become: true
+  no_log: true
+  vars:
+    __wireguard_private_key: >-
+      {{ __wireguard_private_key_content.content | b64decode | trim }}

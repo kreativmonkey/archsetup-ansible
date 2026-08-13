@@ -1,2 +1,0 @@
----
-obs_users: "{{ system_users }}"

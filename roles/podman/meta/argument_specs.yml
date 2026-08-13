@@ -1,0 +1,37 @@
+---
+argument_specs:
+  main:
+    short_description: Install podman, optionally rootless and as a docker replacement
+    description:
+      - >-
+        Installs podman and, when asked, sets up rootless containers through the
+        C(sysctl) and C(system_user) roles and replaces docker with
+        podman-docker.
+      - >-
+        Installs cockpit-podman only when cockpit is already present, which the
+        role determines from the package facts.
+    options:
+      podman_replace_docker:
+        type: bool
+        required: false
+        default: false
+        description:
+          - >-
+            Remove docker and install podman-docker. Off by default because it
+            uninstalls a package.
+      podman_rootless:
+        type: bool
+        required: false
+        default: true
+        description:
+          - >-
+            Set up rootless containers: user namespaces plus a subordinate id
+            range per user.
+      podman_rootless_users:
+        type: list
+        elements: str
+        required: false
+        description:
+          - >-
+            Users that get a subordinate id range. Without one, rootless podman
+            can map a single uid only.

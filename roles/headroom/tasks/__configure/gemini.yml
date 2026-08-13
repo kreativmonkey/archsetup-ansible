@@ -1,0 +1,30 @@
+---
+- name: Create the gemini config directory
+  ansible.builtin.file:
+    path: "/home/{{ headroom_user }}/.gemini"
+    state: directory
+    owner: "{{ headroom_user }}"
+    group: "{{ headroom_user }}"
+    mode: "0755"
+  become: true
+
+# GEMINI.md belongs to the user, so this role owns a marked block in it rather
+# than the whole file. The marker string is deliberately unchanged: a new marker
+# would leave the old block orphaned in the file forever.
+- name: Write the headroom memories into GEMINI.md
+  ansible.builtin.blockinfile:
+    path: "/home/{{ headroom_user }}/.gemini/GEMINI.md"
+    create: true
+    owner: "{{ headroom_user }}"
+    group: "{{ headroom_user }}"
+    mode: "0644"
+    marker: "<!-- {mark} HEADROOM-MEMORIES -->"
+    block: |
+      ## Headroom and RTK (context optimisation)
+
+      - Prefix shell commands with `rtk` to cut token usage, for example
+        `rtk git status` or `rtk ls`.
+      - The headroom proxy listens on `http://localhost:{{ headroom_port }}`.
+      - Route requests through headroom for context compression and shared
+        memory across agents.
+  become: true

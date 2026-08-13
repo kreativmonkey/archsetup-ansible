@@ -1,15 +1,13 @@
 ---
-- name: Restart whisrs service
-  ansible.builtin.systemd:
+# handlers file for whisrs
+#
+# The udev reload is not here: the udev role owns its rules and its handlers,
+# and `notify: Reload udev` from tasks/add_rule.yml fires there.
+- name: Restart whisrs
+  ansible.builtin.systemd_service:
     name: whisrs.service
     scope: user
     state: restarted
+    daemon_reload: true
   become: true
   become_user: "{{ whisrs_user }}"
-
-- name: Reload udev rules
-  ansible.builtin.command: udevadm control --reload-rules
-  notify: Trigger udev
-
-- name: Trigger udev
-  ansible.builtin.command: udevadm trigger

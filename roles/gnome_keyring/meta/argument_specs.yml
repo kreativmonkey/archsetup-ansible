@@ -1,0 +1,50 @@
+---
+argument_specs:
+  main:
+    short_description: Set up gnome-keyring, the SSH agent and a polkit agent for niri
+    description:
+      - >-
+        Gives a non-GNOME Wayland session (niri) the secrets, SSH and polkit
+        behaviour GNOME ships out of the box.
+      - >-
+        SSH deliberately goes through OpenSSH's own ssh-agent, not
+        gcr-ssh-agent. This role owns the user's ssh-agent socket — no other
+        role touches it.
+    options:
+      gnome_keyring_user:
+        type: str
+        required: false
+        description:
+          - Target user. The systemd tasks talk to that user's session bus.
+      gnome_keyring_packages:
+        type: list
+        elements: str
+        required: false
+        description:
+          - Packages for a complete keyring setup under a non-GNOME compositor.
+      gnome_keyring_enable_ssh_agent:
+        type: bool
+        required: false
+        default: true
+        description:
+          - >-
+            Export SSH_AUTH_SOCK to OpenSSH's agent socket and disable
+            gcr-ssh-agent.
+      gnome_keyring_ssh_auth_sock:
+        type: str
+        required: false
+        description:
+          - Socket path written into environment.d.
+      gnome_keyring_enable_polkit_agent:
+        type: bool
+        required: false
+        default: true
+        description:
+          - >-
+            Run polkit-gnome's authentication agent as a user service bound to
+            graphical-session.target.
+      gnome_keyring_polkit_agent_exec:
+        type: str
+        required: false
+        description:
+          - Path of the polkit agent binary.

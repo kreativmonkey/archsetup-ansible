@@ -1,0 +1,22 @@
+---
+# Renders opencode.json from the declared configuration plus whatever other
+# roles registered through add_provider.yml / add_mcp_server.yml. Private:
+# every entry point of this role ends here, nobody calls it from outside.
+
+- name: Create the opencode config directory
+  ansible.builtin.file:
+    path: "{{ opencode_config_path | dirname }}"
+    state: directory
+    owner: "{{ opencode_user }}"
+    group: "{{ opencode_user }}"
+    mode: "0755"
+  become: true
+
+- name: Write opencode.json
+  ansible.builtin.template:
+    src: opencode.json.j2
+    dest: "{{ opencode_config_path }}"
+    owner: "{{ opencode_user }}"
+    group: "{{ opencode_user }}"
+    mode: "0644"
+  become: true

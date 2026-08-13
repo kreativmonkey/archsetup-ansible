@@ -1,0 +1,23 @@
+---
+argument_specs:
+  main:
+    short_description: Install the nix package manager and its daemon
+    description:
+      - >-
+        Installs nix, starts the daemon, puts the listed users into the
+        nix-users group and sets the number of parallel build jobs.
+    options:
+      nix_users:
+        type: list
+        elements: str
+        required: false
+        description:
+          - Users allowed to talk to the nix daemon.
+      nix_max_jobs:
+        type: str
+        required: false
+        default: auto
+        description:
+          - >-
+            Value of C(max-jobs) in /etc/nix/nix.conf. C(auto) is one job per
+            core.

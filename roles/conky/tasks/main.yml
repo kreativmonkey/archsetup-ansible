@@ -1,0 +1,58 @@
+---
+# tasks file for conky
+
+# The template puts the hostname into the config, so the role fetches the fact
+# it needs instead of relying on the play to have gathered it.
+- name: Gather the facts the conky config needs
+  ansible.builtin.setup:
+    gather_subset:
+      - '!all'
+  when: ansible_hostname is not defined
+
+- name: Install conky
+  community.general.pacman:
+    name: conky
+    state: present
+  become: true
+
+- name: Create the configuration directory
+  ansible.builtin.file:
+    path: "{{ conky_config_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Write the conky configuration
+  ansible.builtin.template:
+    src: conkyconfig.j2
+    dest: "{{ conky_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: Create the autostart directory
+  ansible.builtin.file:
+    path: "/home/{{ __conky_user }}/.config/autostart"
+    state: directory
+    owner: "{{ __conky_user }}"
+    group: "{{ __conky_user }}"
+    mode: "0755"
+  become: true
+  loop_control:
+    loop_var: __conky_user
+  loop: "{{ conky_users }}"
+
+- name: Start conky on login
+  ansible.builtin.copy:
+    src: conky.desktop
+    dest: "/home/{{ __conky_user }}/.config/autostart/conky.desktop"
+    owner: "{{ __conky_user }}"
+    group: "{{ __conky_user }}"
+    mode: "0644"
+  become: true
+  loop_control:
+    loop_var: __conky_user
+  loop: "{{ conky_users }}"

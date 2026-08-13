@@ -1,14 +1,32 @@
 ---
 # defaults file for vim
-#
+
 # Which Neovim distribution to install. On change the previously installed
 # distribution is removed so that only the selected one remains.
-# One of: astronvim, lazyvim, nvchad, spacevim, lunarvim
-vim_distro: lazyvim
+# One of: astronvim, lazyvim
+vim_distro: astronvim
 
-# User the distribution is installed for (home dir, ownership, installers run
+# User the distribution is installed for (home dir, ownership, the clone runs
 # as this user).
 vim_user: "{{ system_users[0].name }}"
 
+# Branch or tag of the starter repository. HEAD keeps the starter at whatever
+# upstream ships; pin it to a tag if you want the config reproducible.
+vim_starter_version: HEAD
+
 # Back up an existing ~/.config/nvim before it is removed.
 vim_backup: true
+
+# Rebuild even when the requested distribution is already installed.
+#
+# The rebuild is destructive: it replaces ~/.config/nvim and drops the shared
+# Neovim state, so installed plugins and lazy-lock.json are gone afterwards.
+# That is why it normally only runs when the distribution actually changes.
+# Use this to repair a config you have broken, not routinely.
+vim_force_reinstall: false
+
+# Node.js package to install when no nodejs provider is present yet. Kept
+# separate from the dependency list so an existing provider (e.g.
+# nodejs-lts-jod, which provides + conflicts with nodejs) is not force-replaced
+# under --noconfirm. Only installed when `pacman -T nodejs` reports it missing.
+vim_nodejs_package: nodejs

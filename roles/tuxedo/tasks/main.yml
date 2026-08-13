@@ -1,0 +1,31 @@
+---
+# tasks file for tuxedo
+
+# makepkg needs a toolchain and git to fetch and build a PKGBUILD. Installed
+# from the official repositories, so this part stays privileged.
+- name: Install the build prerequisites for AUR packages
+  community.general.pacman:
+    name:
+      - base-devel
+      - git
+    state: present
+  become: true
+
+# kewlfft.aur.aur, not community.general.pacman: these packages only exist in
+# the AUR. makepkg refuses to run as root, which is why this task drops to an
+# unprivileged account instead of using plain become: true.
+- name: Install the TUXEDO driver packages from the AUR
+  kewlfft.aur.aur:
+    name: "{{ tuxedo_packages }}"
+    use: auto
+    state: present
+  become: true
+  become_user: "{{ tuxedo_build_user }}"
+
+- name: Start the TUXEDO Control Center daemon
+  ansible.builtin.systemd_service:
+    name: tccd.service
+    state: started
+    enabled: true
+  become: true
+  when: tuxedo_enable_control_center

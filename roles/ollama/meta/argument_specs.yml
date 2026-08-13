@@ -1,0 +1,60 @@
+---
+argument_specs:
+  main:
+    short_description: Install ollama with GPU acceleration and manage its models
+    description:
+      - >-
+        Installs ollama and its acceleration backend, configures the service
+        through a systemd drop-in, pulls the configured models and creates the
+        customised variants from a Modelfile.
+    options:
+      ollama_acceleration_package:
+        type: str
+        required: false
+        default: ollama-rocm
+        description:
+          - >-
+            Backend package. One of C(ollama-rocm), C(ollama-cuda),
+            C(ollama-vulkan), or C(ollama) for CPU only.
+      ollama_models:
+        type: list
+        elements: str
+        required: false
+        description:
+          - >-
+            Models to pull. Pulled only when C(ollama list) does not already
+            show them.
+      ollama_environment_variables:
+        type: dict
+        required: false
+        description:
+          - >-
+            Environment of the ollama service, written into the systemd
+            drop-in.
+      ollama_model_customizations:
+        type: list
+        elements: dict
+        required: false
+        description:
+          - Customised models, each built from a generated Modelfile.
+        options:
+          name:
+            type: str
+            required: true
+            description: Name of the resulting model.
+          from:
+            type: str
+            required: true
+            description: Base model the customisation builds on.
+          parameters:
+            type: dict
+            required: false
+            description: C(PARAMETER) lines, for example C(num_ctx).
+          system:
+            type: str
+            required: false
+            description: C(SYSTEM) prompt.
+          template:
+            type: str
+            required: false
+            description: C(TEMPLATE) override.

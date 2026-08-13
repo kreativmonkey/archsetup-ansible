@@ -1,52 +1,58 @@
 ---
 # vars file for vim
 
-vim_home: "/home/{{ vim_user }}"
-vim_config_path: "{{ vim_home }}/.config/nvim"
+__vim_home: "/home/{{ vim_user }}"
+__vim_config_path: "{{ __vim_home }}/.config/nvim"
+
+# Where an existing configuration is moved before it is replaced. Replaced on
+# every rebuild, so it holds the state from immediately before the last one.
+__vim_backup_path: "{{ __vim_config_path }}.back"
+
+# Records which distribution the role installed. This is what makes the role
+# idempotent: without it the role cannot tell an already installed distribution
+# from a switch, and rebuilds on every run.
+#
+# It lives inside the config directory on purpose, so its lifetime is that of
+# the configuration it describes — remove ~/.config/nvim by hand and the role
+# reinstalls on the next run.
+__vim_state_file: "{{ __vim_config_path }}/.ansible_vim_distro"
 
 # Accepted values for vim_distro.
-vim_valid_distros:
+__vim_valid_distros:
   - astronvim
   - lazyvim
-  - nvchad
-  - spacevim
-  - lunarvim
 
 # Config-starter repositories for the git-clone based distributions.
-vim_repos:
+__vim_repos:
   astronvim: https://github.com/AstroNvim/template
   lazyvim: https://github.com/LazyVim/starter
-  nvchad: https://github.com/NvChad/starter
-
-# LunarVim release branch (pins a compatible Neovim version).
-vim_lunarvim_branch: "release-1.4/neovim-0.9"
 
 # Every distribution-related path that gets removed before installing the
 # selected distribution. This is what guarantees that only one distribution is
 # ever present and that switching cleanly deactivates the previous one.
-vim_cleanup_paths:
-  # git-clone distros + SpaceVim symlink target
-  - "{{ vim_home }}/.config/nvim"
-  # LunarVim
-  - "{{ vim_home }}/.config/lvim"
-  - "{{ vim_home }}/.local/share/lunarvim"
-  - "{{ vim_home }}/.local/state/lvim"
-  - "{{ vim_home }}/.cache/lvim"
-  - "{{ vim_home }}/.local/bin/lvim"
-  # SpaceVim
-  - "{{ vim_home }}/.SpaceVim"
-  - "{{ vim_home }}/.SpaceVim.d"
-  - "{{ vim_home }}/.config/nvim_back"
+__vim_cleanup_paths:
+  # git-clone distros
+  - "{{ __vim_home }}/.config/nvim"
+  # legacy LunarVim install (no longer supported; cleaned up on migration)
+  - "{{ __vim_home }}/.config/lvim"
+  - "{{ __vim_home }}/.local/share/lunarvim"
+  - "{{ __vim_home }}/.local/state/lvim"
+  - "{{ __vim_home }}/.cache/lvim"
+  - "{{ __vim_home }}/.local/bin/lvim"
+  # legacy SpaceVim install (no longer supported; cleaned up on migration)
+  - "{{ __vim_home }}/.SpaceVim"
+  - "{{ __vim_home }}/.SpaceVim.d"
+  - "{{ __vim_home }}/.config/nvim_back"
   # shared Neovim runtime state
-  - "{{ vim_home }}/.local/share/nvim"
-  - "{{ vim_home }}/.local/state/nvim"
-  - "{{ vim_home }}/.cache/nvim"
+  - "{{ __vim_home }}/.local/share/nvim"
+  - "{{ __vim_home }}/.local/state/nvim"
+  - "{{ __vim_home }}/.cache/nvim"
 
 # Optional dependencies, all from the official Arch repositories (no AUR).
 # These cover the tooling the supported distributions detect and use:
 # treesitter/LSP builds, fuzzy finding, git integration, clipboard, fonts and
 # image previews.
-vim_dependencies:
+__vim_dependencies:
   # core
   - neovim
   - git
@@ -65,7 +71,8 @@ vim_dependencies:
   - gcc
   - make
   # language runtimes used by plugins / mason-less installs
-  - nodejs
+  # nodejs is handled separately (see vim_nodejs_package) so an already
+  # installed provider such as nodejs-lts-* is not force-replaced.
   - npm
   - python
   - python-pynvim

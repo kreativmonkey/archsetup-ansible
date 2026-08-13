@@ -1,0 +1,109 @@
+---
+argument_specs:
+  main:
+    short_description: Configure WireGuard tunnels from a list of interfaces
+    description:
+      - >-
+        Generates a key pair per interface and writes one wg-quick config file
+        per entry in C(wireguard_interfaces).
+      - >-
+        The role brings no interface of its own. An interface definition is host
+        data and belongs in the inventory, with its identifying values coming
+        from a lookup rather than a literal.
+    options:
+      wireguard_interfaces:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description:
+          - Tunnels to configure, one config file each.
+        options:
+          name:
+            type: str
+            required: true
+            description:
+              - >-
+                Interface name. Decides the config file name and the wg-quick
+                unit, e.g. C(wg0) for /etc/wireguard/wg0.conf.
+          address:
+            type: str
+            required: true
+            description: Address of this host inside the tunnel, with prefix.
+          listen_port:
+            type: int
+            required: false
+            description:
+              - UDP port to listen on. Only needed when peers dial in.
+          mtu:
+            type: int
+            required: false
+            description:
+              - >-
+                Tunnel MTU. Lower it when packets vanish on a path that cannot
+                fragment.
+          dns:
+            type: str
+            required: false
+            description: Resolver to use while the tunnel is up.
+          search_domains:
+            type: list
+            elements: str
+            required: false
+            description:
+              - >-
+                Domains routed to C(dns) through systemd-resolved. Needs C(dns).
+                A leading C(~) is added when missing.
+          post_up:
+            type: list
+            elements: str
+            required: false
+            description: Additional PostUp commands.
+          post_down:
+            type: list
+            elements: str
+            required: false
+            description: Additional PostDown commands.
+          peers:
+            type: list
+            elements: dict
+            required: false
+            description: Peers of this interface.
+            options:
+              public_key:
+                type: str
+                required: true
+                description: Public key of the peer.
+              allowed_ips:
+                type: str
+                required: true
+                description: Networks routed into the tunnel for this peer.
+              preshared_key:
+                type: str
+                required: false
+                description: Optional symmetric key on top of the key pair.
+              endpoint:
+                type: str
+                required: false
+                description: C(host:port) of the peer, for the dialling side.
+              persistent_keepalive:
+                type: int
+                required: false
+                description:
+                  - >-
+                    Keepalive interval in seconds. Needed behind NAT, 25 is the
+                    usual value.
+      wireguard_config_dir:
+        type: str
+        required: false
+        default: /etc/wireguard
+        description:
+          - Directory for the configs and the key pairs. Root only.
+      wireguard_forward_ipv4:
+        type: bool
+        required: false
+        default: false
+        description:
+          - >-
+            Enable net.ipv4.ip_forward through the C(sysctl) role. Needed when
+            this host routes for its peers, not for a plain client.

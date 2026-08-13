@@ -1,0 +1,49 @@
+---
+argument_specs:
+  main:
+    short_description: Install whisrs for local voice dictation
+    description:
+      - >-
+        Builds whisrs with cargo, writes its configuration and runs it as a
+        systemd user service.
+      - >-
+        Grants the input group access through the C(system_user) role and the
+        uinput rule through the C(udev) role.
+    options:
+      whisrs_user:
+        type: str
+        required: false
+        description:
+          - User whisrs is installed and run for.
+      whisrs_language:
+        type: str
+        required: false
+        default: de
+        description:
+          - Transcription language.
+      whisrs_model:
+        type: str
+        required: false
+        default: small
+        description:
+          - >-
+            Whisper model size. Bigger is more accurate and slower; C(small) is
+            where German dictation becomes usable.
+      whisrs_backend:
+        type: str
+        required: false
+        default: local-whisper
+        description:
+          - Transcription backend. C(local-whisper) keeps the audio on the host.
+      whisrs_notify:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Show a desktop notification around a transcription.
+      whisrs_hotkey:
+        type: str
+        required: false
+        default: Super+Ctrl
+        description:
+          - Hotkey that toggles dictation, read through evdev.

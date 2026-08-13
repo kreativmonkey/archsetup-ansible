@@ -1,2 +1,4 @@
 ---
-# vars file for ssh
+# vars file for sshd
+
+__sshd_home: "/home/{{ sshd_user }}"

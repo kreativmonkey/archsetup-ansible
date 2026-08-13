@@ -1,0 +1,17 @@
+---
+# defaults file for tuxedo
+
+# Driver and control packages for TUXEDO hardware. All three are AUR only,
+# there is no official repository counterpart.
+tuxedo_packages:
+  - tuxedo-drivers-dkms
+  - tuxedo-yt6801-dkms
+  - tuxedo-control-center-bin
+
+# Unprivileged account the AUR packages are built as. makepkg refuses to run as
+# root, so this cannot be omitted or set to root.
+tuxedo_build_user: "{{ system_users[0].name }}"
+
+# Start and enable tccd, the daemon the TUXEDO Control Center talks to. Without
+# it the GUI opens and can read nothing.
+tuxedo_enable_control_center: true

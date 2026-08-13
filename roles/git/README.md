@@ -9,7 +9,7 @@ global gitignore, and one identity per forge folder wired up with `includeIf`.
 | Area | How |
 |------|-----|
 | **Packages** | `git`, `lazygit`. `git-delta` and `meld` come from the `common` role. |
-| **Project tree** | One directory per forge under `git_base.dir` (`~/git/github.com`, `~/git/gitlab.puzzle.ch`, …) from `git.config[*].folder`. |
+| **Project tree** | One directory per forge under `git_base.dir` (`~/git/github.com`, …) from `git_identities[*].folder`. |
 | **Global config** | `~/.gitconfig` from `git_settings` / `git_settings_extra` / `git_aliases` (see *Defaults* below). |
 | **Identities** | `~/git/<folder>/.gitconfig` per entry in `git.config`, activated by `[includeIf "gitdir:~/git/<folder>/"]` in the global config. Optional per-identity SSH key and commit signing. |
 | **Global gitignore** | `~/.config/git/ignore` from `git_global_ignore` — git's XDG default path, no `core.excludesFile` needed. |
@@ -17,35 +17,24 @@ global gitignore, and one identity per forge folder wired up with `includeIf`.
 Both managed files are written with `backup: true`, so a hand-written predecessor
 ends up next to it as `.gitconfig.<timestamp>~`.
 
-## Role Variables
+## Parameters
 
-See `defaults/main.yml`:
-
-- `git_user`, `git_base` — target user and root of the project tree.
-- `git_identities` — per-folder identities, defaults to `git.config` from the inventory.
-- `git_global_config` — path of the managed global config (default `~/.gitconfig`).
-- `git_default_identity` — identity for repositories outside `git_base.dir`; defaults to the first inventory entry.
-- `git_user_config_only` — abort commits instead of guessing an identity (only meaningful with an empty `git_default_identity`).
-- `git_settings` — the defaults, as a `section → key → value` dict.
-- `git_settings_extra` — recursively merged over `git_settings`; use this in the inventory instead of restating the whole dict.
-- `git_aliases` — `name → command` dict.
-- `git_global_ignore`, `git_global_ignore_manage` — global ignore patterns / switch.
+`meta/argument_specs.yml` is the contract, `defaults/main.yml` the values.
 
 ### Identity entries
 
 ```yaml
-git:
-  config:
-    - folder: github.com
-      name: Kreativmonkey
-      email: kreativmonkey@calyrium.org
-      # optional:
-      ssh_key: ~/.ssh/id_ed25519_github     # core.sshCommand + IdentitiesOnly
-      signing_key: ~/.ssh/id_ed25519_github.pub
-      signing_format: ssh                   # default: ssh
-      settings:                             # anything else, same shape as git_settings
-        pull:
-          rebase: false
+git_identities:
+  - folder: github.com
+    name: Kreativmonkey
+    email: kreativmonkey@calyrium.org
+    # optional:
+    ssh_key: ~/.ssh/id_ed25519_github     # core.sshCommand + IdentitiesOnly
+    signing_key: ~/.ssh/id_ed25519_github.pub
+    signing_format: ssh                   # default: ssh
+    settings:                             # anything else, same shape as git_settings
+      pull:
+        rebase: false
 ```
 
 `signing_key` enables `commit.gpgsign` and `tag.gpgsign` for that folder only.
@@ -81,13 +70,25 @@ Deliberately *not* set: commit signing globally (per identity instead),
 `core.excludesFile` (the XDG default already points at the managed file), and
 `git maintenance` (needs per-repository registration).
 
-## Example Playbook
+## Entry points
+
+The configuration and the project tree:
 
 ```yaml
-- hosts: localhost
-  become: true
-  roles:
-    - git
+- name: Configure git
+  ansible.builtin.import_role:
+    name: git
+```
+
+Clone a single repository:
+
+```yaml
+- name: Clone the dotfiles
+  ansible.builtin.include_role:
+    name: git
+    tasks_from: clone
+  vars:
+    git_repository: git@github.com:kreativmonkey/dotfiles.git
 ```
 
 ## Notes
@@ -102,6 +103,16 @@ Deliberately *not* set: commit signing globally (per identity instead),
 - **Do not keep a second global config.** Git reads `$XDG_CONFIG_HOME/git/config`
   *and* `~/.gitconfig`, with the latter winning. If you move `git_global_config`
   to the XDG path, delete `~/.gitconfig`.
-- `tasks/clone.yml` (mass-cloning `git.repositorys`) is unfinished — it still
-  references `git_base_dir` / `git_base_folder` / `git_base_owner`, which no
-  longer exist, and the loop is commented out in `main.yml`.
+- **`tasks/clone.yml` works now.** It used to reference `git_base_dir`,
+  `git_base_folder` and `git_base_owner` — three variables that do not exist
+  anywhere in the role — and its loop was commented out in `main.yml`, which is
+  the only reason nobody noticed. It derives the forge from the URL and handles
+  `https://`, `ssh://` and `git@host:path` alike.
+- **`git.config` became `git_identities`, `git.repositorys` became
+  `git_repositories`.** The unprefixed `git` dict is what `ansible-lint` flags as
+  `var-naming[no-role-prefix]`, and a variable called `git` next to a role called
+  `git` reads badly everywhere it appears.
+- **The `ssh.gitlab.puzzle.ch` workaround is no longer a commented-out TODO.**
+  `git_ssh_hosts` is handed to the `sshd` role, which owns `~/.ssh/config` and
+  validates the result with `ssh -G`. Declare the host in the inventory, not in
+  the role.

@@ -1,0 +1,51 @@
+---
+argument_specs:
+  main:
+    short_description: Install firewalld and keep its IPv6 reverse path filter VPN compatible
+    description:
+      - >-
+        Installs firewalld with the nftables backend and sets C(IPv6_rpfilter)
+        in firewalld.conf so it survives the policy routing rules a
+        WireGuard-style VPN client installs.
+      - >-
+        Not a general firewall role: it manages no zones, no services and no
+        ports.
+    options:
+      firewalld_conf:
+        type: str
+        required: false
+        default: /etc/firewalld/firewalld.conf
+        description:
+          - Path of the managed firewalld configuration.
+      firewalld_ipv6_rpfilter:
+        type: raw
+        required: false
+        default: "no"
+        description:
+          - >-
+            Value written to firewalld.conf. Quote it — bare C(yes)/C(no) are
+            YAML booleans and are mapped back to C(strict)/C(no).
+        choices:
+          - strict
+          - loose
+          - strict-forward
+          - loose-forward
+          - "no"
+          - true
+          - false
+      firewalld_verify:
+        type: bool
+        required: false
+        default: true
+        description:
+          - >-
+            Read filter_PREROUTING from nftables and assert the reverse path
+            drop rule is gone. Needs nft and root.
+      firewalld_verify_ping_target:
+        type: str
+        required: false
+        default: 2001:4860:4860::8888
+        description:
+          - >-
+            Destination of the optional connectivity probe. Only runs with
+            C(--tags firewalld_connectivity) and never fails the play.

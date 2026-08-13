@@ -1,17 +1,24 @@
 ---
-- name: Install required packages
-  ansible.builtin.package:
-    name:
-      - openssh
+# tasks file for sshd
+
+- name: Install openssh
+  community.general.pacman:
+    name: openssh
     state: present
   become: true
 
-- name: Generate ssh_key
+- name: Generate the key pair
   ansible.builtin.include_tasks: keygen.yml
+  when: sshd_generate_key
 
-# add ssh-key with ssh-add
+- name: Write the declared ssh_config stanzas
+  ansible.builtin.include_tasks: add_host.yml
+  loop_control:
+    loop_var: sshd_host
+    label: "{{ sshd_host.name }}"
+  loop: "{{ sshd_hosts }}"
 
-- name: Activate ssh agent
-  ansible.builtin.systemd_service:
-    name: ssh-agent
-    scope: "{{ sshd_user.name }}"
+# The ssh agent is not managed here. gnome_keyring owns it: it exports
+# SSH_AUTH_SOCK and enables ssh-agent.socket for the user session. Two roles
+# enabling a different agent for the same user is how "communication with agent
+# failed" happens.

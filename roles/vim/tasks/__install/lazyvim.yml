@@ -1,0 +1,3 @@
+---
+- name: Install LazyVim
+  ansible.builtin.include_tasks: git_starter.yml

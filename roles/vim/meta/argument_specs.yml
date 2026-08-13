@@ -1,0 +1,60 @@
+---
+argument_specs:
+  main:
+    short_description: Install a Neovim distribution and switch between them
+    description:
+      - >-
+        Installs the dependencies of the selected Neovim distribution and clones
+        its config starter into ~/.config/nvim.
+      - >-
+        The install is destructive, so it only runs when the distribution
+        actually changes. The role records what it installed in a marker file
+        inside the config directory.
+    options:
+      vim_distro:
+        type: str
+        required: false
+        default: astronvim
+        choices: [astronvim, lazyvim]
+        description:
+          - Distribution to install.
+      vim_user:
+        type: str
+        required: false
+        description:
+          - >-
+            User the distribution is installed for. Home directory, ownership
+            and the clone all follow from this.
+      vim_starter_version:
+        type: str
+        required: false
+        default: HEAD
+        description:
+          - >-
+            Branch or tag of the starter repository. Pin it to a tag to make the
+            config reproducible.
+      vim_backup:
+        type: bool
+        required: false
+        default: true
+        description:
+          - >-
+            Move an existing ~/.config/nvim to ~/.config/nvim.back before
+            installing.
+      vim_force_reinstall:
+        type: bool
+        required: false
+        default: false
+        description:
+          - >-
+            Rebuild even when the requested distribution is already installed.
+            Destructive: plugins and lazy-lock.json are dropped.
+      vim_nodejs_package:
+        type: str
+        required: false
+        default: nodejs
+        description:
+          - >-
+            Node.js package installed when no provider is present yet. Kept out
+            of the dependency list so an installed provider such as
+            nodejs-lts-jod is not force-replaced.

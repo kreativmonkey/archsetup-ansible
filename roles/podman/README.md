@@ -1,36 +1,43 @@
-podman
-=========
+# podman
 
-Install and setup podman on Archlinux.
+Installs podman, sets up rootless containers and can replace docker with
+`podman-docker`.
 
-Requirements
-------------
+## What it does
 
-- ansible.posix.sysctl
+| Area | How |
+|------|-----|
+| **Packages** | `podman`, plus `fuse-overlayfs` and `slirp4netns` for rootless. |
+| **Cockpit** | `cockpit-podman`, but only when cockpit is already installed — decided from the package facts, not assumed. |
+| **User namespaces** | `kernel.unprivileged_userns_clone` through the `sysctl` role. |
+| **Subordinate ids** | One `/etc/subuid` and `/etc/subgid` line per user through the `system_user` role, followed by `podman system migrate`. |
+| **Docker** | Optional: stop and remove docker, install `podman-docker`. |
 
-Role Variables
---------------
+## Example Playbook
 
-- podman_replace_docker:  <bool> (Default: false) Uninstall docker and replace the docker command by podman
-- podman_rootless:        <bool> (Default: true) Setup podman [rootless mode](https://wiki.archlinux.org/title/Podman#Rootless_Podman)
-- podman_rootless_users:  <list> (required if podman_rootless = true) List of Systemusers who can access podman without root.
+```yaml
+- name: Install podman
+  ansible.builtin.import_role:
+    name: podman
+  vars:
+    podman_rootless: true
+    podman_rootless_users:
+      - sebastian
+```
 
+## Notes
 
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-kreativmonkey <kerativmonkey@calyrium.org>
+- **The role no longer writes sysctl or subuid/subgid itself.** Both are shared
+  resources: `wireguard` also sets kernel parameters, and `useradd`, `usermod`
+  and podman all write the subordinate id files. They belong to `sysctl` and
+  `system_user`.
+- **`podman system migrate` is guarded by a fact, not by `is changed`.** The
+  change happens inside `system_user`, so the central role reports it as
+  `system_user_subid_changed` and this role reacts to that. A handler cannot be
+  notified across a role boundary in that direction.
+- **Rootless needs the full 65536 id range.** With a smaller one, every image
+  that uses a non-root user fails to start.
+- **`podman_replace_docker` is off by default** because it uninstalls a package.
+  docker and `podman-docker` both provide `/usr/bin/docker` and cannot coexist,
+  and the docker service is stopped first so pacman does not pull the daemon out
+  from under running containers.

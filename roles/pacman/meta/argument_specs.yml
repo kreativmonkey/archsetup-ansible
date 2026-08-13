@@ -1,0 +1,50 @@
+---
+argument_specs:
+  main:
+    short_description: Configure pacman, its repositories and the cache cleanup
+    description:
+      - >-
+        Central role for /etc/pacman.conf. It owns single directives in that
+        file — no other role edits it.
+      - >-
+        Also installs the weekly paccache timer that keeps the package cache
+        from growing without bound.
+    options:
+      pacman_parallel_downloads:
+        type: int
+        required: false
+        default: 10
+        description:
+          - Concurrent downloads. pacman's own default is 1.
+      pacman_repos:
+        type: list
+        elements: str
+        required: false
+        description:
+          - >-
+            Repositories to uncomment in /etc/pacman.conf. Each has to exist in
+            the shipped file as a commented section.
+      pacman_color:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Colourise pacman output.
+      pacman_ilovecandy:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Use the pac-man progress animation.
+      pacman_verbose_pkg_lists:
+        type: bool
+        required: false
+        default: true
+        description:
+          - List every package a transaction touches.
+      pacman_paccache:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Install and enable the weekly paccache cleanup timer.

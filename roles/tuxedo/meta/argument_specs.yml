@@ -1,0 +1,31 @@
+---
+argument_specs:
+  main:
+    short_description: Install the TUXEDO hardware drivers from the AUR
+    description:
+      - >-
+        Installs the TUXEDO kernel drivers and the Control Center, all of which
+        exist only in the AUR, and starts the tccd daemon.
+      - >-
+        Requires the C(kewlfft.aur) collection and an unprivileged build account
+        that may run pacman through sudo without a password.
+    options:
+      tuxedo_packages:
+        type: list
+        elements: str
+        required: false
+        description:
+          - AUR packages to install.
+      tuxedo_build_user:
+        type: str
+        required: false
+        description:
+          - >-
+            Unprivileged account the packages are built as. makepkg refuses to
+            run as root, so this must not be root.
+      tuxedo_enable_control_center:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Start and enable tccd, the daemon the Control Center GUI talks to.

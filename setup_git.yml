@@ -1,0 +1,10 @@
+---
+- name: Set up the git configuration and project tree
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Configure git
+      ansible.builtin.import_role:
+        name: git
+      tags:
+        - git

@@ -1,0 +1,25 @@
+---
+# vars file for git
+
+# git reads $XDG_CONFIG_HOME/git/ignore without any core.excludesFile pointing
+# at it, which is why the global ignore goes here and nowhere else.
+__git_xdg_config_path: "/home/{{ git_user }}/.config/git"
+
+# Forge and repository name pulled out of a clone URL. Lazily evaluated, so
+# these only mean anything while tasks/clone.yml is running.
+#
+# Handles all three shapes git accepts:
+#   https://github.com/foo/bar.git
+#   ssh://git@host:22/foo/bar
+#   git@host:foo/bar.git
+__git_repo_domain: >-
+  {{ git_repository
+     | regex_replace('^[a-zA-Z0-9+.-]+://', '')
+     | regex_replace('^[^@/]+@', '')
+     | regex_replace('[:/].*$', '') }}
+
+__git_repo_name: >-
+  {{ git_repository
+     | regex_replace('\.git$', '')
+     | regex_replace('/$', '')
+     | regex_replace('^.*[:/]', '') }}

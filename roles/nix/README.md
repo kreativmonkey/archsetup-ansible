@@ -1,38 +1,29 @@
-nix
-===
+# nix
 
-Installing and configure the nix package manager
+Installs the nix package manager, starts `nix-daemon`, puts the configured users
+into the `nix-users` group and sets `max-jobs`.
 
-Requirements
-------------
+This is what makes the `nix develop` dev shells of every project on this host
+work.
 
-none
+## Example Playbook
 
-Role Variables
---------------
+```yaml
+- name: Install the nix package manager
+  ansible.builtin.import_role:
+    name: nix
+  vars:
+    nix_users:
+      - sebastian
+```
 
-nix_users: {{ system_users }} (default)
+## Notes
 
-Dependencies
-------------
-
-none
-
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - nix
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+- **`/etc/nix/nix.conf` is shared with pacman**, which updates the file on every
+  nix release. That is why the role owns a single `max-jobs` line via
+  `lineinfile` instead of templating the file — the `regexp` targets the active
+  directive, never a commented example.
+- **`max-jobs = auto`** is one build job per core. Nix's own default of `1`
+  leaves most of the machine idle during a build.
+- **The `nix-users` membership goes through `system_user`**, the role that owns
+  groups.

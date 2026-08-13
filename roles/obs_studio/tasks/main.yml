@@ -1,0 +1,21 @@
+---
+# tasks file for obs_studio
+
+- name: Install obs-studio and the virtual camera module
+  community.general.pacman:
+    name: "{{ __obs_studio_packages }}"
+    state: present
+  become: true
+
+- name: Allow the configured users to use the virtual camera
+  ansible.builtin.include_role:
+    name: system_user
+    tasks_from: add_to_group
+  vars:
+    system_user_membership:
+      name: "{{ __obs_studio_user }}"
+      groups:
+        - video
+  loop_control:
+    loop_var: __obs_studio_user
+  loop: "{{ obs_studio_users }}"
