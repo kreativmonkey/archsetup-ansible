@@ -1,0 +1,10 @@
+---
+# vars file for firewalld
+
+# Accepted values for IPv6_rpfilter, per firewalld.conf(5).
+firewalld_ipv6_rpfilter_values:
+  - strict
+  - loose
+  - strict-forward
+  - loose-forward
+  - "no"

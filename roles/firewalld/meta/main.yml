@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: Sebastian Preisner
+  description: >-
+    Install firewalld with the nftables backend and keep its IPv6
+    reverse path filter compatible with VPN policy routing
+  license: MIT
+  min_ansible_version: "2.12"
+  platforms:
+    - name: ArchLinux
+      versions:
+        - all
+  galaxy_tags:
+    - firewalld
+    - nftables
+    - ipv6
+    - vpn
+dependencies: []

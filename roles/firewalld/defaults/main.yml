@@ -1,0 +1,27 @@
+---
+# defaults file for firewalld
+
+# Path of the managed firewalld main configuration.
+firewalld_conf: /etc/firewalld/firewalld.conf
+
+# Reverse path filter for IPv6. firewalld.conf(5) accepts strict,
+# loose, strict-forward, loose-forward and no; the deprecated
+# aliases yes/no map to strict/no.
+#
+# Quote the value: bare yes/no are YAML booleans. They are mapped
+# back to strict/no, but quoting keeps the intent readable.
+#
+# "no" is the default because a WireGuard-style VPN client (NetBird,
+# Tailscale) installs IPv6 policy routing rules that make the
+# reverse path lookup fail for every global source address. The
+# result is an IPv6 stack that looks healthy and answers nothing.
+# See README.md.
+firewalld_ipv6_rpfilter: "no"
+
+# Structural post-check: read filter_PREROUTING from nftables and
+# assert the rpfilter drop rule is gone. Needs nft, i.e. root.
+firewalld_verify: true
+
+# Destination of the optional connectivity probe. Only runs with
+# --tags firewalld_connectivity and never fails the play.
+firewalld_verify_ping_target: 2001:4860:4860::8888
