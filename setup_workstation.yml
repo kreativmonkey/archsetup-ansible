@@ -43,6 +43,19 @@
       tags:
         - firewalld
 
+    # Right after firewalld on purpose: that role sets IPv6_rpfilter=no
+    # precisely because a WireGuard-style tunnel installs policy routing rules
+    # the reverse path filter cannot follow.
+    #
+    # The tunnel definitions in host_vars resolve their values through
+    # Bitwarden, so this play now needs an unlocked vault. Skip it with
+    # --skip-tags wireguard when the vault is locked.
+    - name: Configure the wireguard tunnels
+      ansible.builtin.import_role:
+        name: wireguard
+      tags:
+        - wireguard
+
     - name: Install a Neovim distribution
       ansible.builtin.import_role:
         name: vim
@@ -87,6 +100,6 @@
 
 # Roles kept out of this playbook on purpose. Enable one by adding an
 # import_role task above:
-#   conky editor headroom obs_studio sshd tuxedo whisrs wireguard
+#   conky editor headroom obs_studio sshd tuxedo whisrs
 # The sysctl role has no entry here either: it is a central role that podman
 # and wireguard call through include_role, it is never imported directly.
