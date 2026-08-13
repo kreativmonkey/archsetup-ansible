@@ -1,0 +1,18 @@
+---
+# Stil-Gate für Ansible-Code — gehört ins Projektwurzelverzeichnis.
+# Skill: ansible-develop. yamllint läuft eingebettet über die yaml-Regel.
+#
+# Das production-Profil erzwingt unter anderem: fqcn, name[casing],
+# name[template], var-naming[no-role-prefix], no-changed-when,
+# risky-file-permissions, risky-shell-pipe, yaml[truthy], meta-runtime.
+profile: production
+
+exclude_paths:
+  - .git/
+  - .cache/
+  - .ansible/
+  - collections/ # fremde Collections und Rollen nicht mitlinten
+  - roles/requirements.yml
+
+# Einträge in skip_list brauchen einen Kommentar mit Grund. Ohne Grund wird
+# der Code angepasst, nicht der Linter.
