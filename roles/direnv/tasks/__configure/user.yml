@@ -23,7 +23,7 @@
 - name: Load nix-direnv from the direnvrc of {{ __direnv_user }}
   ansible.builtin.copy:
     content: |
-      {{ ansible_managed | comment }}
+      {{ __direnv_managed_header }}
       source {{ __direnv_nix_direnv_path }}/direnvrc
     dest: "/home/{{ __direnv_user }}/.config/direnv/direnvrc"
     owner: "{{ __direnv_user }}"
@@ -46,7 +46,7 @@
 - name: Enable the direnv hook for fish of {{ __direnv_user }}
   ansible.builtin.copy:
     content: |
-      {{ ansible_managed | comment }}
+      {{ __direnv_managed_header }}
       if type -q direnv
           direnv hook fish | source
       end
