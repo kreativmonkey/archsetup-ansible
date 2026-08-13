@@ -1,2 +1,7 @@
 ---
+# defaults file for common
+
+# Packages this host needs on top of the base set. Everything in here has to
+# exist in the official repositories — the AUR is out of reach for
+# community.general.pacman.
 common_custom_packages: []

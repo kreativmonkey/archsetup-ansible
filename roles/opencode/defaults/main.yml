@@ -1,6 +1,24 @@
 ---
+# defaults file for opencode
+
 opencode_user: "{{ system_users[0].name }}"
 opencode_config_path: "/home/{{ opencode_user }}/.config/opencode/opencode.json"
+
+# Providers and MCP servers other roles register through
+# tasks/add_provider.yml and tasks/add_mcp_server.yml. Both are merged over
+# the declared dicts below when opencode.json is rendered, which is how a
+# second role adds an entry without editing the file behind this role's back.
+opencode_providers_extra: {}
+opencode_mcp_extra: {}
+
+# What opencode may do without asking. "allow" throughout, because the models
+# are local — nothing leaves the host.
+opencode_permissions:
+  bash: allow
+  edit: allow
+  webfetch: allow
+
+opencode_plugins: []
 
 opencode_model: "ollama/mistral-small:latest"
 opencode_small_model: "ollama/qwen3-coder:latest"
@@ -11,14 +29,14 @@ opencode_agents:
     steps: 8
     strategy: "comprehensive"
     instruction: |
-      Focus on architectural integrity and edge cases. 
-      Break down complex tasks into independent sub-tasks suitable for sub-agents. 
+      Focus on architectural integrity and edge cases.
+      Break down complex tasks into independent sub-tasks suitable for sub-agents.
       Always prioritize token efficiency by summarizing context.
   build:
     model: "ollama/qwen3-coder:latest"
     instruction: |
-      You are a TDD-focused builder. 
-      Every code change MUST be accompanied by a verification step or test case. 
+      You are a TDD-focused builder.
+      Every code change MUST be accompanied by a verification step or test case.
       Prefer composition over inheritance.
   doc:
     model: "ollama/gemma4:latest"

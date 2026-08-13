@@ -1,45 +1,90 @@
 ---
 # tasks file for headroom
 
-- name: Install headroom-ai using uv
+- name: Install uv
+  community.general.pacman:
+    name: uv
+    state: present
+  become: true
+
+# uv tool install always succeeds and always reports success, so the role asks
+# what is installed first instead of forcing a reinstall on every play.
+- name: Read the tools uv has installed
   ansible.builtin.command:
-    cmd: "uv tool install --python {{ headroom_python_version }} '{{ headroom_install_package }}' --force"
+    cmd: uv tool list
   become: true
   become_user: "{{ headroom_user }}"
-  changed_when: true  # uv tool install is generally fast, force ensures it's correct
+  register: __headroom_uv_tools
+  changed_when: false
+  check_mode: false
 
-- name: Create systemd user config directory
+- name: Install headroom with uv
+  ansible.builtin.command:
+    cmd: >-
+      uv tool install --python {{ headroom_python_version }}
+      '{{ headroom_install_package }}' --force
+  become: true
+  become_user: "{{ headroom_user }}"
+  changed_when: true
+  when: >-
+    headroom_force_reinstall
+    or 'headroom' not in __headroom_uv_tools.stdout
+
+- name: Create the systemd user directory
   ansible.builtin.file:
     path: "/home/{{ headroom_user }}/.config/systemd/user"
     state: directory
     owner: "{{ headroom_user }}"
     group: "{{ headroom_user }}"
-    mode: '0755'
+    mode: "0755"
+  become: true
 
-- name: Template headroom systemd service
+- name: Write the headroom user service
   ansible.builtin.template:
     src: headroom.service.j2
     dest: "/home/{{ headroom_user }}/.config/systemd/user/headroom.service"
     owner: "{{ headroom_user }}"
     group: "{{ headroom_user }}"
-    mode: '0644'
-  notify: Restart headroom service
+    mode: "0644"
+  become: true
+  notify: Restart headroom
 
-- name: Enable and start headroom service
-  ansible.builtin.systemd:
+- name: Enable the headroom user service
+  ansible.builtin.systemd_service:
     name: headroom.service
     scope: user
-    enabled: true
     state: started
+    enabled: true
     daemon_reload: true
   become: true
   become_user: "{{ headroom_user }}"
 
-- name: Configure Opencode
-  ansible.builtin.include_tasks: opencode.yml
+# opencode.json belongs to the opencode role. This role hands over what it
+# wants registered and lets that role render the file.
+- name: Register the proxy with opencode
+  ansible.builtin.include_role:
+    name: opencode
+    tasks_from: add_provider
+  vars:
+    opencode_provider:
+      name: headroom
+      config: "{{ __headroom_opencode_provider }}"
+  when: headroom_configure_opencode
 
-- name: Configure Cursor Global Rules
-  ansible.builtin.include_tasks: cursor.yml
+- name: Register the MCP server with opencode
+  ansible.builtin.include_role:
+    name: opencode
+    tasks_from: add_mcp_server
+  vars:
+    opencode_mcp_server:
+      name: headroom
+      config: "{{ __headroom_opencode_mcp }}"
+  when: headroom_configure_opencode
 
-- name: Update Global Gemini Memories
-  ansible.builtin.include_tasks: gemini.yml
+- name: Configure the cursor global rules
+  ansible.builtin.include_tasks: __configure/cursor.yml
+  when: headroom_configure_cursor
+
+- name: Configure the gemini global memories
+  ansible.builtin.include_tasks: __configure/gemini.yml
+  when: headroom_configure_gemini

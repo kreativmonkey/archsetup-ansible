@@ -1,0 +1,33 @@
+---
+# paccache itself comes with pacman-contrib; the units are ours because the
+# hardening and the schedule are a decision, not a default.
+- name: Install pacman-contrib for paccache
+  community.general.pacman:
+    name: pacman-contrib
+    state: present
+  become: true
+
+- name: Install the paccache units
+  ansible.builtin.copy:
+    src: "{{ __pacman_paccache_unit }}"
+    dest: "/etc/systemd/system/{{ __pacman_paccache_unit }}"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+  loop_control:
+    loop_var: __pacman_paccache_unit
+  loop: "{{ __pacman_paccache_units }}"
+
+# The units have to be on disk and known to systemd before the timer is
+# enabled, otherwise enabling a unit systemd has not read yet fails.
+- name: Make systemd read the new units
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable the weekly cache cleanup
+  ansible.builtin.systemd_service:
+    name: paccache.timer
+    state: started
+    enabled: true
+  become: true

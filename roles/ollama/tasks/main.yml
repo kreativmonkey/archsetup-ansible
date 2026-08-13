@@ -1,56 +1,60 @@
 ---
-- name: Install ollama and acceleration package
+# tasks file for ollama
+
+- name: Install ollama and the acceleration packages
   community.general.pacman:
-    name:
-      - ollama
-      - "{{ ollama_acceleration_package }}"
-      - rocm-smi-lib
+    name: "{{ __ollama_packages }}"
     state: present
+  become: true
 
-- name: Ensure ollama user is in render and video groups for GPU access
-  ansible.builtin.user:
-    name: ollama
-    groups:
-      - render
-      - video
-    append: true
-  notify: Restart ollama
+# The service account is created by the package. It needs render and video to
+# reach /dev/dri and /dev/kfd — without them ollama silently falls back to CPU
+# inference, which looks like "the model is just slow".
+- name: Grant the ollama service account GPU access
+  ansible.builtin.include_role:
+    name: system_user
+    tasks_from: add_to_group
+  vars:
+    system_user_membership:
+      name: ollama
+      groups:
+        - render
+        - video
+      create_groups: false
 
-- name: Create systemd override directory
+- name: Create the systemd override directory
   ansible.builtin.file:
-    path: /etc/systemd/system/ollama.service.d
+    path: "{{ __ollama_override_path | dirname }}"
     state: directory
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
+  become: true
 
-- name: Configure ollama environment variables
+# A drop-in, not an edit of the shipped unit: pacman keeps updating
+# ollama.service and would take the settings with it.
+- name: Configure the ollama environment
   ansible.builtin.template:
     src: override.conf.j2
-    dest: /etc/systemd/system/ollama.service.d/override.conf
+    dest: "{{ __ollama_override_path }}"
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
+  become: true
   notify: Restart ollama
 
-- name: Ensure ollama service is started and enabled
-  ansible.builtin.service:
+- name: Start the ollama service
+  ansible.builtin.systemd_service:
     name: ollama
     state: started
     enabled: true
+    daemon_reload: true
+  become: true
 
-- name: Pull configured ollama models
-  ansible.builtin.command:
-    cmd: "ollama pull {{ item }}"
-  loop: "{{ ollama_models }}"
-  register: _ollama_pull
-  changed_when: "'pulling manifest' in _ollama_pull.stdout"
+# The pulls and the model customisations below talk to the running service, so
+# a pending restart has to have happened first.
+- name: Apply a pending ollama restart
+  ansible.builtin.meta: flush_handlers
 
-- name: Apply model customizations (Modelfiles)
-  ansible.builtin.shell: |
-    printf 'FROM {{ item.from }}\n{% if item.template is defined %}TEMPLATE """{{ item.template }}"""\n{% endif %}{% if item.parameters is defined %}{% for key, value in item.parameters.items() %}PARAMETER {{ key }} {{ value }}\n{% endfor %}{% endif %}{% if item.system is defined %}SYSTEM "{{ item.system }}"\n{% endif %}' > /tmp/OllamaCustomModelfile && \
-    ollama create {{ item.name }} -f /tmp/OllamaCustomModelfile && \
-    rm /tmp/OllamaCustomModelfile
-  loop: "{{ ollama_model_customizations }}"
-  register: _ollama_create
-  changed_when: "'success' in _ollama_create.stdout"
+- name: Manage the models
+  ansible.builtin.include_tasks: __models/manage.yml

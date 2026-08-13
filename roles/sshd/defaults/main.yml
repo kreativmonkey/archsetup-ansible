@@ -1,3 +1,20 @@
 ---
+# defaults file for sshd
+
+# User the key pair is generated for.
+sshd_user: "{{ system_users[0].name }}"
+
+# Group that owns ~/.ssh. Defaults to the user's primary group.
+sshd_group: "{{ sshd_user }}"
+
+# Key file inside ~/.ssh. ed25519 is the default type: small, fast, and the
+# only one OpenSSH recommends for new keys.
 sshd_keyfile: id_ed25519
-sshd_user: "{{ system_users[0] }}"
+
+# Generate a key pair at all. Off when the keys come from a password manager.
+sshd_generate_key: true
+
+# Per-host stanzas written into ~/.ssh/config. Each is a marked block, so the
+# rest of the file stays the user's own. Fed by other roles through
+# tasks/add_host.yml.
+sshd_hosts: []

@@ -1,25 +1,28 @@
-- name: Install required packages for WireGuard
-  ansible.builtin.package:
-    name:
-      - wireguard-tools
-      - net-tools
+---
+# tasks file for wireguard
+
+- name: Install the wireguard tooling
+  community.general.pacman:
+    name: wireguard-tools
     state: present
   become: true
 
+# Forwarding is a kernel parameter, and kernel parameters belong to the sysctl
+# role — podman sets one too, and two roles writing /etc/sysctl.d is one too
+# many.
 - name: Enable IPv4 forwarding
-  ansible.builtin.sysctl:
-    name: net.ipv4.ip_forward
-    value: '1'
-    state: present
-    reload: yes
-  become: true
+  ansible.builtin.include_role:
+    name: sysctl
+    tasks_from: set
+  vars:
+    sysctl_setting:
+      name: net.ipv4.ip_forward
+      value: 1
+  when: wireguard_forward_ipv4
 
-- name: Generate wireguard configuration
-  include_tasks: __create/generate_config.yml
+- name: Configure the tunnels
+  ansible.builtin.include_tasks: __configure/interface.yml
   loop_control:
     loop_var: wireguard_interface
-  loop: "{{ wg_interfaces }}"
-  vars:
-    wg_interfaces:
-      - pudelab
-      - wg0
+    label: "{{ wireguard_interface.name }}"
+  loop: "{{ wireguard_interfaces }}"

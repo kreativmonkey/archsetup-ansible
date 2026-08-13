@@ -20,18 +20,13 @@ The config file stays `root:root 0600`. No backup copy is written — a stray
 `firewalld.conf.<timestamp>~` in `/etc/firewalld/` is clutter in a directory
 firewalld itself reads, and the desired state lives in this role anyway.
 
-## Role Variables
+## Parameters
 
-See `defaults/main.yml`:
+`meta/argument_specs.yml` is the contract, `defaults/main.yml` the values.
 
-- `firewalld_ipv6_rpfilter` — the value written to `firewalld.conf`. Default
-  `"no"`. Allowed per `firewalld.conf(5)`: `strict`, `loose`,
-  `strict-forward`, `loose-forward`, `no`. Quote it; bare `yes`/`no` are YAML
-  booleans and get mapped back to `strict`/`no`.
-- `firewalld_conf` — path of the managed file.
-- `firewalld_verify` — run the structural nftables check (default `true`).
-- `firewalld_verify_ping_target` — destination of the optional connectivity
-  probe, default `2001:4860:4860::8888`.
+One trap worth stating twice: **quote `firewalld_ipv6_rpfilter`.** Bare `yes`
+and `no` are YAML booleans, not strings. The role maps them back to `strict`
+and `no` so nothing breaks, but `"no"` is what you mean.
 
 ## Why `IPv6_rpfilter=no`
 

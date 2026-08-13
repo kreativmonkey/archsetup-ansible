@@ -1,0 +1,24 @@
+---
+# Destructive on purpose: docker and podman-docker both provide /usr/bin/docker,
+# so they cannot be installed side by side. Guarded by podman_replace_docker.
+
+# Stopping the service first — pacman removing the package under a running
+# daemon leaves containers behind with no manager.
+- name: Stop the docker service
+  ansible.builtin.systemd_service:
+    name: docker
+    state: stopped
+  become: true
+  failed_when: false
+
+- name: Remove docker
+  community.general.pacman:
+    name: docker
+    state: absent
+  become: true
+
+- name: Provide the docker command through podman
+  community.general.pacman:
+    name: podman-docker
+    state: present
+  become: true

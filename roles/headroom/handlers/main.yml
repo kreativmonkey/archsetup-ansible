@@ -1,8 +1,10 @@
 ---
-- name: Restart headroom service
-  ansible.builtin.systemd:
+# handlers file for headroom
+- name: Restart headroom
+  ansible.builtin.systemd_service:
     name: headroom.service
     scope: user
     state: restarted
+    daemon_reload: true
   become: true
   become_user: "{{ headroom_user }}"

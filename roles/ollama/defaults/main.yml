@@ -6,8 +6,8 @@ ollama_acceleration_package: ollama-rocm
 ollama_models:
   - gemma4:e4b
   - qwen3-coder:30b
-  #- mistral-small:24b
-  #- llama4:scout
+  # - mistral-small:24b
+  # - llama4:scout
 
 # Environment variables for the ollama service
 ollama_environment_variables:
@@ -28,7 +28,7 @@ ollama_model_customizations:
     parameters:
       num_ctx: 32768
     system: "You are a helpful AI assistant. Respond directly. DO NOT use thinking tags."
-  
+
   - name: "qwen3-coder:latest"
     from: "qwen3-coder:30b"
     parameters:

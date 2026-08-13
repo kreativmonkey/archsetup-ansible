@@ -1,20 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "provider": {{ opencode_providers | to_json }},
+  "provider": {{ opencode_providers | combine(opencode_providers_extra) | to_json(indent=2) }},
   "model": "{{ opencode_model }}",
   "small_model": "{{ opencode_small_model }}",
-  "agent": {
-    "plan": {{ opencode_agents.plan | to_json }},
-    "build": {{ opencode_agents.build | to_json }},
-    "doc": {{ opencode_agents.doc | to_json }},
-    "orchestration": {{ opencode_orchestration | to_json }}
-  },
-  "permission": {
-    "bash": "allow",
-    "edit": "allow",
-    "webfetch": "allow"
-  },
-  "plugin": [],
-  "lsp": {{ opencode_lsp | to_json }},
-  "mcp": {{ opencode_mcp | to_json }}
+  "agent": {{ opencode_agents | combine({'orchestration': opencode_orchestration}) | to_json(indent=2) }},
+  "permission": {{ opencode_permissions | to_json(indent=2) }},
+  "plugin": {{ opencode_plugins | to_json }},
+  "lsp": {{ opencode_lsp | to_json(indent=2) }},
+  "mcp": {{ opencode_mcp | combine(opencode_mcp_extra) | to_json(indent=2) }}
 }

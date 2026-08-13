@@ -1,0 +1,43 @@
+---
+# tasks file for nix
+
+- name: Install the nix package manager
+  community.general.pacman:
+    name: nix
+    state: present
+  become: true
+
+- name: Start the nix daemon
+  ansible.builtin.systemd_service:
+    name: nix-daemon
+    state: started
+    enabled: true
+  become: true
+
+- name: Allow the configured users to use the nix daemon
+  ansible.builtin.include_role:
+    name: system_user
+    tasks_from: add_to_group
+  vars:
+    system_user_membership:
+      name: "{{ __nix_user }}"
+      groups:
+        - nix-users
+  loop_control:
+    loop_var: __nix_user
+  loop: "{{ nix_users }}"
+
+# /etc/nix/nix.conf ships with the package and pacman keeps updating it, so
+# this role owns a single directive instead of the whole file. The regexp
+# targets the active line, never a commented example.
+- name: Set the number of parallel build jobs
+  ansible.builtin.lineinfile:
+    path: /etc/nix/nix.conf
+    regexp: '^\s*max-jobs\s*='
+    line: "max-jobs = {{ nix_max_jobs }}"
+    insertafter: EOF
+    state: present
+    owner: root
+    group: root
+    mode: "0644"
+  become: true

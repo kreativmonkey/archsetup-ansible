@@ -1,0 +1,6 @@
+---
+# defaults file for obs_studio
+
+# Users that get access to the virtual camera. v4l2loopback exposes it as a
+# /dev/video* node, which is owned by the video group.
+obs_studio_users: "{{ system_users | map(attribute='name') | list }}"

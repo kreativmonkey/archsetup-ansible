@@ -1,0 +1,52 @@
+---
+# /etc/pacman.conf belongs to the pacman package as much as to Ansible, so this
+# role owns single directives. Every regexp targets the active line, never a
+# commented example.
+
+# Value-less switches. `state` follows the toggle, so turning one off removes
+# the line instead of leaving it behind.
+- name: Set the pacman output flags
+  ansible.builtin.lineinfile:
+    path: "{{ __pacman_conf }}"
+    regexp: '^\s*{{ __pacman_flag.name }}\s*$'
+    line: "{{ __pacman_flag.name }}"
+    insertafter: '^\[options\]'
+    state: "{{ 'present' if __pacman_flag.enabled else 'absent' }}"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  loop_control:
+    loop_var: __pacman_flag
+    label: "{{ __pacman_flag.name }}"
+  loop: "{{ __pacman_flags }}"
+
+- name: Set the number of parallel downloads
+  ansible.builtin.lineinfile:
+    path: "{{ __pacman_conf }}"
+    regexp: '^\s*ParallelDownloads\s*='
+    line: "ParallelDownloads = {{ pacman_parallel_downloads }}"
+    insertafter: '^\[options\]'
+    state: present
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+# A repository section is two lines that ship commented out together, so both
+# have to be uncommented in one go — a lineinfile per line would leave the
+# section without its mirrorlist include.
+- name: Enable the configured repositories
+  ansible.builtin.replace:
+    path: "{{ __pacman_conf }}"
+    regexp: >-
+      ^#\[{{ __pacman_repo }}\]$\n^#Include\s*=\s*/etc/pacman.d/mirrorlist$
+    replace: "[{{ __pacman_repo }}]\nInclude = /etc/pacman.d/mirrorlist"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Update the pacman cache
+  loop_control:
+    loop_var: __pacman_repo
+  loop: "{{ pacman_repos }}"

@@ -1,6 +1,9 @@
 ---
-- name: Configure pacman
-  ansible.builtin.include_tasks: pacmanconf.yml
+# tasks file for pacman
 
-- name: Setup pacman helpers
-  ansible.builtin.include_tasks: pacmanhelper.yml
+- name: Configure pacman.conf
+  ansible.builtin.include_tasks: __configure/conf.yml
+
+- name: Set up the weekly cache cleanup
+  ansible.builtin.include_tasks: __configure/paccache.yml
+  when: pacman_paccache

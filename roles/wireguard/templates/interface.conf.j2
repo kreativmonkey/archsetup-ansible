@@ -1,0 +1,43 @@
+{{ ansible_managed | comment }}
+[Interface]
+Address = {{ wireguard_interface.address }}
+PrivateKey = {{ __wireguard_private_key }}
+{% if wireguard_interface.listen_port is defined %}
+ListenPort = {{ wireguard_interface.listen_port }}
+{% endif %}
+{% if wireguard_interface.mtu is defined %}
+MTU = {{ wireguard_interface.mtu }}
+{% endif %}
+{% if wireguard_interface.dns is defined %}
+DNS = {{ wireguard_interface.dns }}
+{% endif %}
+{#
+  DNS = above tells wg-quick which resolver to use. It does not make
+  systemd-resolved route a domain to it, so a split-DNS zone needs the routing
+  domain set explicitly — that is what the ~ prefix does.
+#}
+{% if wireguard_interface.search_domains | default([]) | length > 0 %}
+PostUp = resolvectl dns %i {{ wireguard_interface.dns }}; resolvectl domain %i {{ wireguard_interface.search_domains | map('regex_replace', '^~?', '~') | join(' ') }}
+PostDown = resolvectl revert %i
+{% endif %}
+{% for post_up in wireguard_interface.post_up | default([]) %}
+PostUp = {{ post_up }}
+{% endfor %}
+{% for post_down in wireguard_interface.post_down | default([]) %}
+PostDown = {{ post_down }}
+{% endfor %}
+{% for peer in wireguard_interface.peers | default([]) %}
+
+[Peer]
+PublicKey = {{ peer.public_key }}
+{% if peer.preshared_key is defined %}
+PresharedKey = {{ peer.preshared_key }}
+{% endif %}
+AllowedIPs = {{ peer.allowed_ips }}
+{% if peer.endpoint is defined %}
+Endpoint = {{ peer.endpoint }}
+{% endif %}
+{% if peer.persistent_keepalive is defined %}
+PersistentKeepalive = {{ peer.persistent_keepalive }}
+{% endif %}
+{% endfor %}

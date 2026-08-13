@@ -1,0 +1,22 @@
+---
+# vars file for pacman
+
+# Shared with the pacman package itself, which drops a .pacnew next to it on
+# update. That is why this role owns single directives in the file and never
+# templates it.
+__pacman_conf: /etc/pacman.conf
+
+# Boolean directives in the Misc options section. They are switches without a
+# value, so the line and the regexp are the same string.
+__pacman_flags:
+  - name: Color
+    enabled: "{{ pacman_color }}"
+  - name: ILoveCandy
+    enabled: "{{ pacman_ilovecandy }}"
+  - name: VerbosePkgLists
+    enabled: "{{ pacman_verbose_pkg_lists }}"
+
+# Unit files for the weekly cache cleanup.
+__pacman_paccache_units:
+  - paccache.service
+  - paccache.timer

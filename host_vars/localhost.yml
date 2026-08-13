@@ -1,46 +1,63 @@
 ---
+# Accounts of this host. Consumed by the system_user role and, through
+# system_users[0].name, as the default target user of most other roles.
 system_users:
   - name: sebastian
     group: sebastian
     groups:
       - name: cups
-    shell: /bin/fish
-    keyboard: 
+    # /usr/bin/fish, not /bin/fish: that is what is in /etc/passwd, and both
+    # resolve to the same binary — declaring the other one buys a pointless
+    # usermod on the first run.
+    shell: /usr/bin/fish
     github: kreativmonkey
 
-podman_rootless_users: "{{ system_users[0].name }}"
-
+# Editor that becomes $EDITOR (editor role) and core.editor (git role). One
+# declaration, two consumers.
 default_editor: nvim
 
-pacman:
-  parallel_downloads: 10
+# --- pacman -----------------------------------------------------------------
+pacman_parallel_downloads: 10
 
-openvpn:
-  redhat:
-    enable: true
-    username: "{{ lookup('community.general.bitwarden', 'Red Hat Kerberos', field='username') | first }}"
-  puzzle:
-    enable: true
-    user: '{{ system_users[0].name }}'
+# --- podman -----------------------------------------------------------------
+podman_rootless_users:
+  - "{{ system_users[0].name }}"
 
-git:
-  config:
-    - folder: gitlab.puzzle.ch
-      name: Sebastian Preisner
-      email: preisner@puzzle-itc.de
-    - folder: github.com
-      name: Kreativmonkey
-      email: kreativmonkey@calyrium.org
-    - folder: git.f4mily.net
-      name: Kreativmonkey
-      email: kreativmonkey@calyrium.org
+# --- git --------------------------------------------------------------------
+git_identities:
+  - folder: gitlab.puzzle.ch
+    name: Sebastian Preisner
+    email: preisner@puzzle-itc.de
+  - folder: github.com
+    name: Kreativmonkey
+    email: kreativmonkey@calyrium.org
+  - folder: git.f4mily.net
+    name: Kreativmonkey
+    email: kreativmonkey@calyrium.org
 
-  repositorys:
-    # git.puzzle.ch
-    - git@ssh.gitlab.puzzle.ch:pitcde/pdoc.git
-    - git@ssh.gitlab.puzzle.ch:pitcde/ansible-development.git
-    - git@ssh.gitlab.puzzle.ch:pitcde/ansible-schulung.git
-    # git.f4mily.net
-    # -
-    # github.com
-    # -
+git_repositories: []
+
+# --- wireguard --------------------------------------------------------------
+# Every identifying value comes from a single Bitwarden item, so nothing about
+# the target network lands in this public repository. The item needs these
+# custom fields:
+#
+#   Address  DNS  SearchDomain  PublicKey  PresharedKey  AllowedIPs  Endpoint
+#
+# DNS and SearchDomain are the two that used to be literals in
+# roles/wireguard/templates/pudelab.conf.j2 — add them to the item before the
+# next run.
+wireguard_interfaces: []
+# wireguard_interfaces:
+#   - name: pudelab
+#     address: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='Address') | first }}"
+#     dns: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='DNS') | first }}"
+#     search_domains:
+#       - "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='SearchDomain') | first }}"
+#     mtu: 1300
+#     peers:
+#       - public_key: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='PublicKey') | first }}"
+#         preshared_key: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='PresharedKey') | first }}"
+#         allowed_ips: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='AllowedIPs') | first }}"
+#         endpoint: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='Endpoint') | first }}"
+#         persistent_keepalive: 25

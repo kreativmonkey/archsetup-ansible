@@ -1,0 +1,15 @@
+---
+argument_specs:
+  main:
+    short_description: Install obs-studio with virtual camera support
+    description:
+      - >-
+        Installs obs-studio, the Qt Wayland platform plugins and
+        v4l2loopback-dkms, and puts the listed users into the video group.
+    options:
+      obs_studio_users:
+        type: list
+        elements: str
+        required: false
+        description:
+          - Users that get access to the virtual camera device.

@@ -1,0 +1,92 @@
+---
+# Orchestration only. Every configuration task lives in a role, and every role
+# is runnable on its own: it gathers the facts it needs and raises its own
+# privileges per task. That is why there is no `become` and no
+# `gather_facts: true` here.
+- name: Set up an Arch Linux workstation
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Apply the declared users and groups
+      ansible.builtin.import_role:
+        name: system_user
+      tags:
+        - system_user
+
+    - name: Configure pacman and its repositories
+      ansible.builtin.import_role:
+        name: pacman
+      tags:
+        - pacman
+
+    - name: Install the base package set
+      ansible.builtin.import_role:
+        name: common
+      tags:
+        - common
+
+    - name: Install podman
+      ansible.builtin.import_role:
+        name: podman
+      tags:
+        - podman
+
+    - name: Install udev rules
+      ansible.builtin.import_role:
+        name: udev
+      tags:
+        - udev
+
+    - name: Establish the firewall policy
+      ansible.builtin.import_role:
+        name: firewalld
+      tags:
+        - firewalld
+
+    - name: Install a Neovim distribution
+      ansible.builtin.import_role:
+        name: vim
+      tags:
+        - vim
+
+    - name: Install the nix package manager
+      ansible.builtin.import_role:
+        name: nix
+      tags:
+        - nix
+
+    - name: Configure direnv
+      ansible.builtin.import_role:
+        name: direnv
+      tags:
+        - direnv
+
+    - name: Configure printing
+      ansible.builtin.import_role:
+        name: cups
+      tags:
+        - cups
+
+    - name: Configure the keyring and polkit agent
+      ansible.builtin.import_role:
+        name: gnome_keyring
+      tags:
+        - gnome_keyring
+
+    - name: Install ollama
+      ansible.builtin.import_role:
+        name: ollama
+      tags:
+        - ollama
+
+    - name: Configure opencode
+      ansible.builtin.import_role:
+        name: opencode
+      tags:
+        - opencode
+
+# Roles kept out of this playbook on purpose. Enable one by adding an
+# import_role task above:
+#   conky editor headroom obs_studio sshd tuxedo whisrs wireguard
+# The sysctl role has no entry here either: it is a central role that podman
+# and wireguard call through include_role, it is never imported directly.

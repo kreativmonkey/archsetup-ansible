@@ -1,0 +1,16 @@
+---
+# vars file for ollama
+
+# ollama itself, the acceleration backend and rocm-smi-lib, which ollama shells
+# out to for the GPU memory it reports.
+__ollama_packages:
+  - ollama
+  - "{{ ollama_acceleration_package }}"
+  - rocm-smi-lib
+
+# Drop-in for the shipped unit. Never the unit itself — pacman updates that.
+__ollama_override_path: /etc/systemd/system/ollama.service.d/override.conf
+
+# Where the rendered Modelfiles live. On disk rather than in /tmp, because they
+# are the state that decides whether `ollama create` has to run again.
+__ollama_modelfile_path: /etc/ollama/modelfiles

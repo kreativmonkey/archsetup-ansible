@@ -1,0 +1,10 @@
+---
+# defaults file for nix
+
+# Users allowed to talk to the nix daemon.
+nix_users:
+  - "{{ system_users[0].name }}"
+
+# Parallel build jobs. "auto" is one job per core; the nix default of 1 leaves
+# most of the machine idle during a build.
+nix_max_jobs: auto

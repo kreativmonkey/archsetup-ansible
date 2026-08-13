@@ -6,7 +6,7 @@
 # instead of writing "True"/"False" into the config file.
 - name: Normalise the requested IPv6_rpfilter value
   ansible.builtin.set_fact:
-    firewalld_ipv6_rpfilter_wanted: >-
+    __firewalld_ipv6_rpfilter_wanted: >-
       {{ {true: 'strict', false: 'no'}.get(
            firewalld_ipv6_rpfilter, firewalld_ipv6_rpfilter)
          | string | lower }}
@@ -14,25 +14,27 @@
 - name: Validate the IPv6_rpfilter value
   ansible.builtin.assert:
     that:
-      - firewalld_ipv6_rpfilter_wanted in firewalld_ipv6_rpfilter_values
+      - __firewalld_ipv6_rpfilter_wanted in __firewalld_ipv6_rpfilter_values
     fail_msg: >-
-      IPv6_rpfilter={{ firewalld_ipv6_rpfilter_wanted }} is not valid.
+      IPv6_rpfilter={{ __firewalld_ipv6_rpfilter_wanted }} is not valid.
       firewalld.conf(5) accepts
-      {{ firewalld_ipv6_rpfilter_values | join(', ') }}.
+      {{ __firewalld_ipv6_rpfilter_values | join(', ') }}.
     quiet: true
 
-- name: Installing firewalld
-  ansible.builtin.package:
+- name: Install firewalld with the nftables backend
+  community.general.pacman:
     name:
       - firewalld
       - nftables
     state: present
+  become: true
 
-- name: Start firewalld service
-  ansible.builtin.service:
+- name: Start the firewalld service
+  ansible.builtin.systemd_service:
     name: firewalld
     state: started
     enabled: true
+  become: true
 
 # The line may be present, commented out, or missing entirely, hence
 # the optional comment in the regexp plus the EOF fallback.
@@ -40,41 +42,43 @@
   ansible.builtin.lineinfile:
     path: "{{ firewalld_conf }}"
     regexp: '^#?\s*IPv6_rpfilter='
-    line: "IPv6_rpfilter={{ firewalld_ipv6_rpfilter_wanted }}"
+    line: "IPv6_rpfilter={{ __firewalld_ipv6_rpfilter_wanted }}"
     insertafter: EOF
     state: present
     owner: root
     group: root
     mode: "0600"
+  become: true
   notify: Reload firewalld
 
 # The verification below has to see the reloaded ruleset, not the one
 # from before this play.
-- name: Apply pending firewalld reload
+- name: Apply the pending firewalld reload
   ansible.builtin.meta: flush_handlers
 
-- name: Read the firewalld prerouting chain from nftables
+- name: Read the prerouting chain from nftables
   ansible.builtin.command:
     cmd: nft list chain inet firewalld filter_PREROUTING
-  register: firewalld_prerouting
+  become: true
+  register: __firewalld_prerouting
   changed_when: false
   failed_when: false
   check_mode: false
   when: firewalld_verify | bool
 
 # A verification that cannot run must not pass silently. rc != 0 is
-# only acceptable when nft says the chain does not exist - anything
+# only acceptable when nft says the chain does not exist — anything
 # else (no nft, no root) means the check did not happen.
 - name: Assert the prerouting chain was readable
   ansible.builtin.assert:
     that:
       - >-
-        firewalld_prerouting.rc == 0 or
-        'No such file' in firewalld_prerouting.stderr
+        __firewalld_prerouting.rc == 0 or
+        'No such file' in __firewalld_prerouting.stderr
     fail_msg: >-
       Could not read filter_PREROUTING
-      (rc={{ firewalld_prerouting.rc }}):
-      {{ firewalld_prerouting.stderr | default('') | trim }}.
+      (rc={{ __firewalld_prerouting.rc }}):
+      {{ __firewalld_prerouting.stderr | default('') | trim }}.
       The structural check needs nft and root.
     quiet: true
   when:
@@ -85,31 +89,29 @@
 - name: Assert the IPv6 reverse path filter drop rule is gone
   ansible.builtin.assert:
     that:
-      - firewalld_prerouting.stdout is not search(_firewalld_rpf_rule)
+      - __firewalld_prerouting.stdout is not search(__firewalld_rpf_rule)
     fail_msg: >-
       filter_PREROUTING still drops packets whose IPv6 source address
       has no reverse path. The reload did not pick up
-      IPv6_rpfilter={{ firewalld_ipv6_rpfilter_wanted }} from
+      IPv6_rpfilter={{ __firewalld_ipv6_rpfilter_wanted }} from
       {{ firewalld_conf }}.
     success_msg: >-
       filter_PREROUTING carries no IPv6 reverse path filter drop rule.
     quiet: true
-  vars:
-    _firewalld_rpf_rule: 'fib saddr .* check missing.*drop'
   when:
     - firewalld_verify | bool
-    - firewalld_ipv6_rpfilter_wanted == 'no'
+    - __firewalld_ipv6_rpfilter_wanted == 'no'
     - not ansible_check_mode
 
 # Every other mode keeps a fib check somewhere. Whether that mode
-# works on this host is a measurement, not an assumption - print the
+# works on this host is a measurement, not an assumption — print the
 # chain and let the operator look.
 - name: Show the prerouting chain for a restrictive rpfilter mode
   ansible.builtin.debug:
-    var: firewalld_prerouting.stdout_lines
+    var: __firewalld_prerouting.stdout_lines
   when:
     - firewalld_verify | bool
-    - firewalld_ipv6_rpfilter_wanted != 'no'
+    - __firewalld_ipv6_rpfilter_wanted != 'no'
     - not ansible_check_mode
 
 # Functional probe, deliberately not an assertion: on a fresh install
@@ -117,7 +119,7 @@
 - name: Probe a global IPv6 destination
   ansible.builtin.command:
     cmd: ping -6 -c 2 -W 2 {{ firewalld_verify_ping_target }}
-  register: firewalld_ping6
+  register: __firewalld_ping6
   changed_when: false
   failed_when: false
   check_mode: false
@@ -129,7 +131,7 @@
   ansible.builtin.debug:
     msg: >-
       {{ firewalld_verify_ping_target }} answers.
-  when: firewalld_ping6.rc == 0
+  when: __firewalld_ping6.rc == 0
   tags:
     - never
     - firewalld_connectivity
@@ -138,10 +140,10 @@
   ansible.builtin.debug:
     msg: >-
       {{ firewalld_verify_ping_target }} does not answer. Not
-      necessarily this role - check the global address, the RA
+      necessarily this role — check the global address, the RA
       default route and the upstream gateway before blaming
       firewalld.
-  when: firewalld_ping6.rc != 0
+  when: __firewalld_ping6.rc != 0
   tags:
     - never
     - firewalld_connectivity

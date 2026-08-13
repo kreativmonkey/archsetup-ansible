@@ -1,3 +1,7 @@
 ---
-cups_users: 
+# defaults file for cups
+
+# Users allowed to administer printers. Membership in the cups group is what
+# lets them add and configure queues without a polkit prompt per action.
+cups_users:
   - "{{ system_users[0].name }}"

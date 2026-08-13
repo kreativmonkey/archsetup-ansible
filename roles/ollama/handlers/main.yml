@@ -1,6 +1,8 @@
 ---
+# handlers file for ollama
 - name: Restart ollama
-  ansible.builtin.service:
+  ansible.builtin.systemd_service:
     name: ollama
     state: restarted
-    enabled: true
+    daemon_reload: true
+  become: true

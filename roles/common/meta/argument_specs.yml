@@ -1,0 +1,18 @@
+---
+argument_specs:
+  main:
+    short_description: Install the base package set of the workstation
+    description:
+      - >-
+        Installs the editors, terminal tooling, backup, network and office
+        packages every host in this setup gets.
+    options:
+      common_custom_packages:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description:
+          - >-
+            Packages this host needs on top of the base set. Must exist in the
+            official repositories.

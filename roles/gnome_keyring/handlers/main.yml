@@ -1,0 +1,10 @@
+---
+# handlers file for gnome_keyring
+- name: Restart the polkit agent
+  ansible.builtin.systemd_service:
+    name: "{{ __gnome_keyring_polkit_unit }}"
+    scope: user
+    state: restarted
+    daemon_reload: true
+  become: true
+  become_user: "{{ gnome_keyring_user }}"

@@ -1,0 +1,24 @@
+---
+# vars file for headroom
+
+# What the opencode role registers on this role's behalf. Internal: the shape
+# is opencode's, and it is derived from headroom_port rather than configured.
+__headroom_opencode_provider:
+  npm: "@ai-sdk/openai-compatible"
+  name: Headroom (via local proxy)
+  options:
+    baseURL: "http://localhost:{{ headroom_port }}/v1"
+    maxOutputTokens: 4096
+  models:
+    gpt-4o:
+      name: GPT-4o (Headroom)
+    claude-3-5-sonnet-latest:
+      name: Claude 3.5 Sonnet (Headroom)
+
+__headroom_opencode_mcp:
+  type: local
+  command:
+    - "/home/{{ headroom_user }}/.local/bin/headroom"
+    - mcp
+    - start
+  enabled: true

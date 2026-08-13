@@ -1,19 +1,24 @@
 ---
 # defaults file for editor
-editor_default: vim
 
+# Editor that becomes $EDITOR. The inventory declares this once as
+# default_editor, because the git role puts the same value into core.editor.
+editor_default: "{{ default_editor | default('nvim') }}"
+
+# Also set $VISUAL. Programs disagree on which one they honour, and having them
+# point at different editors is a good way to get surprised.
+editor_set_visual: true
 
 # https://langserver.org/
-# Supported by helix: https://docs.helix-editor.com/lang-support.html
-editor_helix_language_server:
-  - gopls # for Go, gomod, gotmpl, gowork
-  - python-lsp-server # python
-  # - dockerfile-language-server # dockerfiles currently only in AUR!
-  - yaml-language-server # yaml
-  - texlab # latex
-  - lua-language-server # lua
-  # - haskell-language-server # haskell
-  - bash-language-server # bash
-  - vscode-json-languageserver # json
-  - vscode-html-languageserver # html
-  - vscode-css-languageserver # css
+# Language servers installed alongside helix. Everything here is in the
+# official repositories; helix has no built-in installer like mason.
+editor_helix_language_servers:
+  - gopls # Go, gomod, gotmpl, gowork
+  - python-lsp-server
+  - yaml-language-server
+  - texlab # LaTeX
+  - lua-language-server
+  - bash-language-server
+  - vscode-json-languageserver
+  - vscode-html-languageserver
+  - vscode-css-languageserver

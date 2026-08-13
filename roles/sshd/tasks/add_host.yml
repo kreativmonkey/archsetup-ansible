@@ -1,0 +1,30 @@
+---
+# Entry point for roles that need a host stanza in ~/.ssh/config. That file
+# belongs to the user, so this role owns one marked block per host and never
+# the whole file.
+
+- name: Create the ssh directory of {{ sshd_user }}
+  ansible.builtin.file:
+    path: "{{ __sshd_home }}/.ssh"
+    state: directory
+    owner: "{{ sshd_user }}"
+    group: "{{ sshd_group }}"
+    mode: "0700"
+  become: true
+
+- name: Write the ssh_config stanza for {{ sshd_host.name }}
+  ansible.builtin.blockinfile:
+    path: "{{ __sshd_home }}/.ssh/config"
+    create: true
+    marker: "# {mark} ansible:sshd:{{ sshd_host.name }}"
+    block: |
+      Host {{ sshd_host.name }}
+      {% for key, value in sshd_host.options.items() %}
+        {{ key }} {{ value }}
+      {% endfor %}
+    owner: "{{ sshd_user }}"
+    group: "{{ sshd_group }}"
+    mode: "0600"
+    state: "{{ sshd_host.state | default('present') }}"
+    validate: /usr/bin/ssh -G -F %s dummy.invalid
+  become: true

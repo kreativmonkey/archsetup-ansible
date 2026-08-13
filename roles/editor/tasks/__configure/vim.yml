@@ -1,0 +1,8 @@
+---
+- name: Install the vim plugins from the repositories
+  community.general.pacman:
+    name:
+      - vim-plug
+      - vim-ansible
+    state: present
+  become: true

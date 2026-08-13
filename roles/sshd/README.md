@@ -1,38 +1,64 @@
-Role Name
-=========
+# sshd
 
-A brief description of the role goes here.
+Central role for the client side of SSH. It owns `~/.ssh`: the key pair and one
+marked block per host in `~/.ssh/config`.
 
-Requirements
-------------
+It deliberately does **not** manage the ssh agent — `gnome_keyring` owns that.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+## Entry points
 
-Role Variables
---------------
+Install openssh, generate the key, apply the declared stanzas:
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+```yaml
+- name: Configure ssh
+  ansible.builtin.import_role:
+    name: sshd
+```
 
-Dependencies
-------------
+Generate a key pair only:
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+```yaml
+- name: Generate an ssh key
+  ansible.builtin.include_role:
+    name: sshd
+    tasks_from: keygen
+  vars:
+    sshd_user: sebastian
+```
 
-Example Playbook
-----------------
+Add a host stanza — what other roles use:
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+```yaml
+- name: Work around the host key rotation of a forge
+  ansible.builtin.include_role:
+    name: sshd
+    tasks_from: add_host
+  vars:
+    sshd_host:
+      name: git.example.org
+      options:
+        UpdateHostKeys: "no"
+```
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+`keygen` sets `sshd_public_key`, so a playbook can hand the key to a forge
+without reading the file out of this role's directory.
 
-License
--------
+## Notes
 
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+- **This role was broken in three ways before.** `keygen.yml` read
+  `git_user` — a variable of the `git` role — to build the path it slurped the
+  public key from, so it failed outright without that role. `sshd_user` was the
+  whole `system_users[0]` dict in one place and used as a name in another. And
+  the agent task passed `scope: "{{ sshd_user.name }}"` to `systemd`, where
+  `scope` only accepts `user`, `system` or `global`.
+- **The agent belongs to `gnome_keyring`.** That role exports `SSH_AUTH_SOCK`,
+  enables OpenSSH's `ssh-agent.socket` and disables `gcr-ssh-agent` for a
+  documented reason. A second role enabling an agent for the same user is how
+  "communication with agent failed" happens.
+- **`add_host` validates with `ssh -G`** before the block is kept, so a typo in
+  an ssh_config keyword fails the task instead of breaking every later `ssh`
+  invocation for that user.
+- **`openssh_keypair` never overwrites.** An existing key of the same type is
+  left alone, so a key already deployed in an `authorized_keys` survives a run.
+- **`community.crypto` is required** — `just setup` installs it from
+  `requirements.yml`.

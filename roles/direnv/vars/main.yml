@@ -1,0 +1,6 @@
+---
+# vars file for direnv
+
+# Where the upstream direnvrc lands. Outside any user's home, because every
+# user's direnvrc sources this one file.
+__direnv_nix_direnv_path: /usr/share/nix-direnv

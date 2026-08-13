@@ -1,0 +1,11 @@
+---
+# Entry point for roles that ship an MCP server opencode should start.
+
+- name: Register the MCP server {{ opencode_mcp_server.name }}
+  ansible.builtin.set_fact:
+    opencode_mcp_extra: >-
+      {{ opencode_mcp_extra
+         | combine({opencode_mcp_server.name: opencode_mcp_server.config}) }}
+
+- name: Write the opencode configuration
+  ansible.builtin.include_tasks: __config/render.yml

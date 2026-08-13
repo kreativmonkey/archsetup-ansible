@@ -1,3 +1,4 @@
+{{ ansible_managed | comment }}
 [general]
 backend = "{{ whisrs_backend }}"
 language = "{{ whisrs_language }}"
@@ -8,4 +9,4 @@ notify = {{ whisrs_notify | lower }}
 model = "{{ whisrs_model }}"
 
 [hotkeys]
-toggle = "Super+Ctrl"
+toggle = "{{ whisrs_hotkey }}"

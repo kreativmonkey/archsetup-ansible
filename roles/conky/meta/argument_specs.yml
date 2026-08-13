@@ -1,0 +1,21 @@
+---
+argument_specs:
+  main:
+    short_description: Install conky and start it on login
+    description:
+      - >-
+        Writes a system wide conky configuration and drops an XDG autostart
+        entry for the listed users.
+    options:
+      conky_users:
+        type: list
+        elements: str
+        required: false
+        description:
+          - Users that get the autostart entry.
+      conky_config_path:
+        type: str
+        required: false
+        default: /etc/conky/conky.conf
+        description:
+          - Path of the system wide configuration.

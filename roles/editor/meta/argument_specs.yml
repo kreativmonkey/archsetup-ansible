@@ -1,0 +1,39 @@
+---
+argument_specs:
+  main:
+    short_description: Install the default editor and make it $EDITOR
+    description:
+      - >-
+        Central role for the default editor. It owns the C(EDITOR) and
+        C(VISUAL) lines in /etc/environment.
+      - >-
+        It installs the editor package and, for the editors it knows, a little
+        extra setup — the hx symlink and the language servers for helix.
+      - >-
+        It does not manage any editor's configuration. The Neovim config belongs
+        to the C(vim) role.
+    options:
+      editor_default:
+        type: str
+        required: false
+        description:
+          - >-
+            Package name of the editor that becomes $EDITOR. Declared once in
+            the inventory as C(default_editor), because the C(git) role puts the
+            same value into core.editor.
+      editor_set_visual:
+        type: bool
+        required: false
+        default: true
+        description:
+          - >-
+            Set $VISUAL alongside $EDITOR. Programs disagree on which one they
+            honour.
+      editor_helix_language_servers:
+        type: list
+        elements: str
+        required: false
+        description:
+          - >-
+            Language servers installed with helix. Only used when
+            C(editor_default) is helix.

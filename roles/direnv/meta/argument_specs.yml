@@ -1,0 +1,35 @@
+---
+argument_specs:
+  main:
+    short_description: Install direnv and wire it into the users' shells
+    description:
+      - >-
+        Installs direnv, hooks it into fish and bash for the listed users and
+        optionally installs the nix-direnv direnvrc that caches C(use flake).
+    options:
+      direnv_users:
+        type: list
+        elements: str
+        required: false
+        description:
+          - Users direnv is set up for.
+      direnv_nix_direnv:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Install the nix-direnv direnvrc and source it from every user.
+      direnv_nix_direnv_version:
+        type: str
+        required: false
+        default: "3.1.1"
+        description:
+          - >-
+            nix-direnv release the direnvrc is taken from. Pinned on purpose,
+            an unpinned direnvrc changes every dev shell on the host without a
+            commit anywhere.
+      direnv_settings:
+        type: str
+        required: false
+        description:
+          - Content of ~/.config/direnv/direnv.toml.

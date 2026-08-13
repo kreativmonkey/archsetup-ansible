@@ -1,0 +1,188 @@
+---
+argument_specs:
+  main:
+    short_description: Manage the global git configuration and the project tree
+    description:
+      - >-
+        Installs git and lazygit, lays out ~/git/<forge>/ and writes the global
+        git configuration with one identity per forge folder, wired up with
+        includeIf.
+      - >-
+        Central role for the git configuration. It also clones the declared
+        repositories and hands the ssh_config stanzas the forges need to the
+        C(sshd) role.
+    options:
+      git_user:
+        type: str
+        required: false
+        description:
+          - User the configuration is written for.
+      git_base:
+        type: dict
+        required: false
+        description:
+          - Root of the project tree and its ownership.
+        options:
+          dir:
+            type: str
+            required: true
+            description: Root directory, one subdirectory per forge.
+          owner:
+            type: str
+            required: true
+            description: Owner of the tree and of the clones.
+          group:
+            type: str
+            required: true
+            description: Group of the tree.
+      git_identities:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description:
+          - >-
+            One identity per forge folder. Each gets a .gitconfig in its folder
+            and an includeIf in the global config.
+        options:
+          folder:
+            type: str
+            required: true
+            description:
+              - >-
+                Directory below C(git_base.dir), conventionally the forge host
+                name.
+          name:
+            type: str
+            required: true
+            description: Committer name.
+          email:
+            type: str
+            required: true
+            description: Committer email.
+          ssh_key:
+            type: str
+            required: false
+            description:
+              - Key used for this folder, via core.sshCommand and IdentitiesOnly.
+          signing_key:
+            type: str
+            required: false
+            description:
+              - >-
+                Signing key. Enables commit.gpgsign and tag.gpgsign for this
+                folder only.
+          signing_format:
+            type: str
+            required: false
+            default: ssh
+            description: Value of gpg.format.
+          settings:
+            type: dict
+            required: false
+            description:
+              - Additional settings, same shape as C(git_settings).
+      git_global_config:
+        type: str
+        required: false
+        description:
+          - >-
+            Path of the managed global config. Keep it at ~/.gitconfig unless
+            you also delete that file — git reads XDG *and* ~/.gitconfig, and
+            the latter wins.
+      git_default_identity:
+        type: dict
+        required: false
+        description:
+          - >-
+            Identity for repositories no includeIf matches. Defaults to the
+            first entry of C(git_identities).
+      git_user_config_only:
+        type: bool
+        required: false
+        default: false
+        description:
+          - >-
+            Abort a commit instead of guessing an identity. Only meaningful with
+            an empty C(git_default_identity).
+      git_settings:
+        type: dict
+        required: false
+        description:
+          - Global settings as a C(section -> key -> value) dict.
+      git_settings_extra:
+        type: dict
+        required: false
+        default: {}
+        description:
+          - >-
+            Recursively merged over C(git_settings). Use this from the inventory
+            instead of restating the whole dict.
+      git_aliases:
+        type: dict
+        required: false
+        description:
+          - Aliases as a C(name -> command) dict.
+      git_global_ignore_manage:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Manage ~/.config/git/ignore.
+      git_global_ignore:
+        type: list
+        elements: str
+        required: false
+        description:
+          - >-
+            Global ignore patterns. Machine-local noise only — build artefacts
+            belong in the repository's own .gitignore.
+      git_repositories:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description:
+          - Clone URLs, in the shape C(clone) expects.
+      git_repository_version:
+        type: str
+        required: false
+        default: HEAD
+        description:
+          - Branch or tag a clone is checked out at.
+      git_ssh_hosts:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description:
+          - >-
+            ssh_config stanzas handed to the C(sshd) role, in the shape its
+            C(add_host) entry point expects.
+
+  clone:
+    short_description: Clone a single repository into the project tree
+    description:
+      - >-
+        The forge directory is derived from the URL, so the clone lands where
+        the includeIf patterns expect it and picks up the right identity.
+      - >-
+        Clones what is missing and leaves an existing checkout alone. Accepts
+        https, ssh:// and scp-style URLs.
+    options:
+      git_repository:
+        type: str
+        required: true
+        description:
+          - Clone URL.
+      git_repository_version:
+        type: str
+        required: false
+        default: HEAD
+        description:
+          - Branch or tag to check out.
+      git_base:
+        type: dict
+        required: false
+        description:
+          - Root of the project tree and its ownership.

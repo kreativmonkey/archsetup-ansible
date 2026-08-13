@@ -1,5 +1,0 @@
-- name: Setup archlinux installation
-  hosts: localhost
-  become: true
-  roles:
-    - git

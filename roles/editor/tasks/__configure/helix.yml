@@ -1,0 +1,15 @@
+---
+# Arch installs the binary as `helix`, while every tutorial, keybinding and
+# muscle memory says `hx`.
+- name: Provide the hx command
+  ansible.builtin.file:
+    src: /usr/bin/helix
+    dest: /usr/bin/hx
+    state: link
+  become: true
+
+- name: Install the language servers for helix
+  community.general.pacman:
+    name: "{{ editor_helix_language_servers }}"
+    state: present
+  become: true

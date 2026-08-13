@@ -1,3 +1,0 @@
----
-- name: Install AstroNvim
-  ansible.builtin.include_tasks: _git_starter.yml

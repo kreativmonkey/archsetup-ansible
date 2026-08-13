@@ -1,2 +1,9 @@
-conky_users: 
+---
+# defaults file for conky
+
+# Users that get the autostart entry. The conky config itself is system wide.
+conky_users:
   - "{{ system_users[0].name }}"
+
+# System wide configuration conky reads when started without -c.
+conky_config_path: /etc/conky/conky.conf

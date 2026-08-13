@@ -1,0 +1,14 @@
+---
+argument_specs:
+  main:
+    short_description: Install cups and grant printer administration
+    description:
+      - >-
+        Installs and starts cups and puts the listed users into the cups group.
+    options:
+      cups_users:
+        type: list
+        elements: str
+        required: false
+        description:
+          - Users allowed to administer printers.

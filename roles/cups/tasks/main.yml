@@ -1,26 +1,31 @@
 ---
-- name: Installing cups
-  ansible.builtin.package:
+# tasks file for cups
+
+- name: Install cups
+  community.general.pacman:
     name: cups
     state: present
+  become: true
 
-- name: Create Cups group
-  ansible.builtin.group:
-    name: cups
-    state: present
-
-- name: Add group to cups users
-  ansible.builtin.user:
-    name: "{{ _cups_user }}"
-    groups: cups
-    append: true
+# The cups group is created by the package, but not on a host where cups was
+# never installed before this run finishes. system_user owns groups, so it
+# creates the group and the membership in one call.
+- name: Allow the configured users to administer printers
+  ansible.builtin.include_role:
+    name: system_user
+    tasks_from: add_to_group
+  vars:
+    system_user_membership:
+      name: "{{ __cups_user }}"
+      groups:
+        - cups
   loop_control:
-    loop_var: _cups_user
+    loop_var: __cups_user
   loop: "{{ cups_users }}"
-  notify: Restart cups
 
-- name: Start cups service
+- name: Start the cups service
   ansible.builtin.service:
     name: cups
     state: started
     enabled: true
+  become: true

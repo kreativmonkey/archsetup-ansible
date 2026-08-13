@@ -1,0 +1,6 @@
+---
+# vars file for gnome_keyring
+
+# The unit this role installs. Named once so the template, the enable task and
+# the handler cannot drift apart.
+__gnome_keyring_polkit_unit: polkit-gnome-authentication-agent-1.service

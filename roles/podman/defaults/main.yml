@@ -1,4 +1,14 @@
 ---
 # defaults file for podman
+
+# Remove docker and install podman-docker, which provides a `docker` command
+# that talks to podman. Off by default: it uninstalls a package.
 podman_replace_docker: false
+
+# Set up rootless containers: the userns sysctl and a subordinate id range per
+# user.
 podman_rootless: true
+
+# Users that get a subordinate id range. Without one, rootless podman can only
+# map a single uid and every image that uses a non-root user fails.
+podman_rootless_users: "{{ system_users | map(attribute='name') | list }}"

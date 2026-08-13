@@ -1,46 +1,113 @@
 ---
 # tasks file for vim
 
-- name: Validate selected Neovim distribution
+- name: Validate the selected Neovim distribution
   ansible.builtin.assert:
-    that: vim_distro in vim_valid_distros
+    that: vim_distro in __vim_valid_distros
     fail_msg: >-
       vim_distro '{{ vim_distro }}' is not supported.
-      Choose one of: {{ vim_valid_distros | join(', ') }}.
+      Choose one of: {{ __vim_valid_distros | join(', ') }}.
     quiet: true
 
-- name: Install optional dependencies (official Arch repos)
-  ansible.builtin.package:
-    name: "{{ vim_dependencies }}"
+- name: Check for the distribution marker
+  ansible.builtin.stat:
+    path: "{{ __vim_state_file }}"
+  become: true
+  register: __vim_marker
+
+- name: Read the installed distribution
+  ansible.builtin.slurp:
+    src: "{{ __vim_state_file }}"
+  become: true
+  register: __vim_marker_content
+  when: __vim_marker.stat.exists
+
+# No marker means either nothing is installed or the configuration predates
+# the marker. Both cases want a rebuild, so an empty value is correct: it
+# never equals a valid vim_distro.
+- name: Record which distribution is installed
+  ansible.builtin.set_fact:
+    __vim_installed_distro: >-
+      {{ (__vim_marker_content.content | b64decode | trim)
+         if __vim_marker.stat.exists else '' }}
+
+- name: Decide whether the distribution has to be rebuilt
+  ansible.builtin.set_fact:
+    __vim_rebuild: >-
+      {{ vim_force_reinstall | bool
+         or __vim_installed_distro != vim_distro }}
+
+- name: Report that the requested distribution is already installed
+  ansible.builtin.debug:
+    msg: >-
+      {{ vim_distro }} is already installed. Skipping the destructive
+      rebuild, which would drop plugins and lazy-lock.json. Set
+      vim_force_reinstall=true to rebuild anyway.
+  when: not __vim_rebuild | bool
+
+# nodejs has providers that conflict with it (nodejs-lts-jod and friends).
+# Asking pacman whether the dependency is already satisfied avoids replacing an
+# installed provider under --noconfirm.
+- name: Check whether a nodejs provider is installed
+  ansible.builtin.command:
+    cmd: pacman -T nodejs
+  register: __vim_nodejs_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Install the optional dependencies
+  community.general.pacman:
+    name: >-
+      {{ __vim_dependencies
+         + ([vim_nodejs_package] if __vim_nodejs_check.rc != 0 else []) }}
     state: present
   become: true
 
-- name: Back up existing Neovim configuration
-  when: vim_backup
+- name: Back up the existing Neovim configuration
+  when:
+    - vim_backup
+    - __vim_rebuild | bool
   become: true
-  become_user: "{{ vim_user }}"
   block:
-    - name: Check for existing Neovim configuration
+    - name: Check for an existing Neovim configuration
       ansible.builtin.stat:
-        path: "{{ vim_config_path }}"
-      register: _vim_existing_config
+        path: "{{ __vim_config_path }}"
+      register: __vim_existing_config
 
-    - name: Copy current configuration to backup
-      ansible.builtin.copy:
-        remote_src: true
-        src: "{{ vim_config_path }}/"
-        dest: "{{ vim_config_path }}.back"
-        mode: preserve
-      when: _vim_existing_config.stat.exists
+    # The previous backup has to go first. Writing into a directory that
+    # still exists merges two generations of config into one tree, which
+    # is not a backup.
+    - name: Drop the previous backup
+      ansible.builtin.file:
+        path: "{{ __vim_backup_path }}"
+        state: absent
+      when: __vim_existing_config.stat.exists
+
+    # Move rather than copy: the cleanup below deletes the source anyway,
+    # and mv keeps the original ownership, so the backup does not end up
+    # owned by root. -T is what keeps a surviving destination from
+    # turning the backup into nvim.back/nvim.
+    - name: Move the current configuration to the backup
+      ansible.builtin.command:
+        argv:
+          - mv
+          - -T
+          - "{{ __vim_config_path }}"
+          - "{{ __vim_backup_path }}"
+      changed_when: true
+      when: __vim_existing_config.stat.exists
 
 - name: Remove any previously installed distribution
   ansible.builtin.file:
-    path: "{{ _vim_cleanup_path }}"
+    path: "{{ __vim_cleanup_path }}"
     state: absent
   become: true
-  loop: "{{ vim_cleanup_paths }}"
   loop_control:
-    loop_var: _vim_cleanup_path
+    loop_var: __vim_cleanup_path
+  loop: "{{ __vim_cleanup_paths }}"
+  when: __vim_rebuild | bool
 
-- name: Install selected distribution ({{ vim_distro }})
-  ansible.builtin.include_tasks: "{{ vim_distro }}.yml"
+- name: Install the selected distribution {{ vim_distro }}
+  ansible.builtin.include_tasks: "__install/{{ vim_distro }}.yml"
+  when: __vim_rebuild | bool

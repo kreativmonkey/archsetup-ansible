@@ -1,0 +1,126 @@
+---
+argument_specs:
+  main:
+    short_description: Configure opencode against the local ollama models
+    description:
+      - >-
+        Installs the language servers opencode drives and renders
+        ~/.config/opencode/opencode.json.
+      - >-
+        This role owns that file. Other roles add providers or MCP servers
+        through C(add_provider) and C(add_mcp_server), never by editing it.
+    options:
+      opencode_user:
+        type: str
+        required: false
+        description:
+          - User the configuration is written for.
+      opencode_config_path:
+        type: str
+        required: false
+        description:
+          - Path of the managed opencode.json.
+      opencode_model:
+        type: str
+        required: false
+        description:
+          - Default model, as C(provider/model).
+      opencode_small_model:
+        type: str
+        required: false
+        description:
+          - Model used for cheap mechanical work.
+      opencode_agents:
+        type: dict
+        required: false
+        description:
+          - Agent definitions, one key per agent.
+      opencode_orchestration:
+        type: dict
+        required: false
+        description:
+          - Subagent orchestration settings.
+      opencode_providers:
+        type: dict
+        required: false
+        description:
+          - Model providers, one key per provider.
+      opencode_providers_extra:
+        type: dict
+        required: false
+        default: {}
+        description:
+          - >-
+            Providers registered by other roles. Merged over
+            C(opencode_providers).
+      opencode_lsp:
+        type: dict
+        required: false
+        description:
+          - Language server definitions.
+      opencode_mcp:
+        type: dict
+        required: false
+        description:
+          - MCP servers, one key per server.
+      opencode_mcp_extra:
+        type: dict
+        required: false
+        default: {}
+        description:
+          - >-
+            MCP servers registered by other roles. Merged over C(opencode_mcp).
+      opencode_permissions:
+        type: dict
+        required: false
+        description:
+          - What opencode may do without asking.
+      opencode_plugins:
+        type: list
+        required: false
+        default: []
+        description:
+          - Plugins to load.
+
+  add_provider:
+    short_description: Register a model provider with opencode
+    description:
+      - >-
+        Entry point for roles that expose a model endpoint. The configuration
+        is re-rendered from the declared providers plus every registered
+        addition, so repeated calls accumulate.
+    options:
+      opencode_provider:
+        type: dict
+        required: true
+        description:
+          - The provider to register.
+        options:
+          name:
+            type: str
+            required: true
+            description: Key the provider gets in opencode.json.
+          config:
+            type: dict
+            required: true
+            description: Provider definition, as opencode expects it.
+
+  add_mcp_server:
+    short_description: Register an MCP server with opencode
+    description:
+      - Entry point for roles that ship an MCP server opencode should start.
+    options:
+      opencode_mcp_server:
+        type: dict
+        required: true
+        description:
+          - The MCP server to register.
+        options:
+          name:
+            type: str
+            required: true
+            description: Key the server gets in opencode.json.
+          config:
+            type: dict
+            required: true
+            description: Server definition, as opencode expects it.

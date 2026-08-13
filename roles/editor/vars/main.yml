@@ -1,0 +1,24 @@
+---
+# vars file for editor
+
+# /etc/environment is read by pam_env for every login session, which is what
+# makes $EDITOR apply to ssh, tty and the graphical session alike. Shared with
+# the distribution and the user, so this role owns single lines in it.
+__editor_environment_file: /etc/environment
+
+# The package name and the command are not the same thing: the package is
+# `neovim`, the binary is `nvim`. $EDITOR needs the binary.
+__editor_commands:
+  neovim: nvim
+  helix: hx
+  vim: vim
+
+__editor_command: >-
+  {{ __editor_commands.get(editor_default, editor_default) }}
+
+# Editors this role knows extra setup for. Anything else is installed and made
+# the default, but gets no per-editor tasks.
+__editor_configurable:
+  - helix
+  - neovim
+  - vim

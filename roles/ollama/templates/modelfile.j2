@@ -1,0 +1,11 @@
+{{ ansible_managed | comment }}
+FROM {{ __ollama_customization.from }}
+{% if __ollama_customization.template is defined %}
+TEMPLATE """{{ __ollama_customization.template }}"""
+{% endif %}
+{% for key, value in (__ollama_customization.parameters | default({})).items() %}
+PARAMETER {{ key }} {{ value }}
+{% endfor %}
+{% if __ollama_customization.system is defined %}
+SYSTEM """{{ __ollama_customization.system }}"""
+{% endif %}
