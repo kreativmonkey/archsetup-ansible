@@ -1,0 +1,11 @@
+---
+collections:
+  # pacman, bitwarden lookup, systemd helpers
+  - name: community.general
+  # sysctl (the canonical module, ansible.builtin.sysctl is a redirect)
+  - name: ansible.posix
+  # openssh_keypair in the sshd role
+  - name: community.crypto
+  # AUR packages in the tuxedo role. Not bundled with the ansible package,
+  # so this is the one entry that really has to be installed.
+  - name: kewlfft.aur
