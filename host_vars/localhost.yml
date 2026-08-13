@@ -43,21 +43,16 @@ git_repositories: []
 # custom fields:
 #
 #   Address  DNS  SearchDomain  PublicKey  PresharedKey  AllowedIPs  Endpoint
-#
-# DNS and SearchDomain are the two that used to be literals in
-# roles/wireguard/templates/pudelab.conf.j2 — add them to the item before the
-# next run.
-wireguard_interfaces: []
-# wireguard_interfaces:
-#   - name: pudelab
-#     address: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='Address') | first }}"
-#     dns: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='DNS') | first }}"
-#     search_domains:
-#       - "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='SearchDomain') | first }}"
-#     mtu: 1300
-#     peers:
-#       - public_key: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='PublicKey') | first }}"
-#         preshared_key: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='PresharedKey') | first }}"
-#         allowed_ips: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='AllowedIPs') | first }}"
-#         endpoint: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='Endpoint') | first }}"
-#         persistent_keepalive: 25
+wireguard_interfaces: 
+  - name: pudelab
+    address: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='Address') | first }}"
+    dns: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='DNS') | first }}"
+    search_domains:
+       - "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='SearchDomain') | first }}"
+    mtu: 1300
+    peers:
+      - public_key: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='PublicKey') | first }}"
+        preshared_key: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='PresharedKey') | first }}"
+        allowed_ips: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='AllowedIPs') | first }}"
+        endpoint: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='Endpoint') | first }}"
+        persistent_keepalive: 25
