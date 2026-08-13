@@ -8,67 +8,37 @@ argument_specs:
         Group membership is always appended, so an account keeps the groups it
         was granted outside Ansible.
     options:
+      # No `options:` block on purpose. This defaults to the inventory's
+      # system_users, the account record that sixteen roles read, and Ansible
+      # validates declared sub-options strictly — an annotation somebody adds
+      # to an account for an unrelated purpose would fail the whole play here.
       system_user_accounts:
         type: list
         elements: dict
         required: false
         description:
           - Accounts to keep in sync. Defaults to the inventory C(system_users).
-        options:
-          name:
-            type: str
-            required: true
-            description: Login name.
-          group:
-            type: str
-            required: false
-            description: Primary group, defaults to the login name.
-          groups:
-            type: list
-            elements: dict
-            required: false
-            description: Secondary groups, each with at least a C(name).
-          uid:
-            type: int
-            required: false
-            description: Numeric user id, omitted when unset.
-          shell:
-            type: str
-            required: false
-            description: Login shell, omitted when unset.
+          - >-
+            Keys this role reads - C(name) (required), C(group) (primary group,
+            defaults to the login name), C(groups) (list of dicts with at least
+            a C(name)), C(uid), C(shell). Any other key is ignored.
 
   add:
     short_description: Create a single account with its groups
     description:
       - Entry point for one account in the shape C(main) loops over.
     options:
+      # Same reason as in main: this dict comes straight out of the inventory
+      # account record, so its extra keys must not fail validation.
       system_user_account:
         type: dict
         required: true
         description:
           - The account to create.
-        options:
-          name:
-            type: str
-            required: true
-            description: Login name.
-          group:
-            type: str
-            required: false
-            description: Primary group, defaults to the login name.
-          groups:
-            type: list
-            elements: dict
-            required: false
-            description: Secondary groups, each with at least a C(name).
-          uid:
-            type: int
-            required: false
-            description: Numeric user id, omitted when unset.
-          shell:
-            type: str
-            required: false
-            description: Login shell, omitted when unset.
+          - >-
+            Keys this role reads - C(name) (required), C(group) (primary group,
+            defaults to the login name), C(groups) (list of dicts with at least
+            a C(name)), C(uid), C(shell). Any other key is ignored.
 
   add_group:
     short_description: Create a single group
