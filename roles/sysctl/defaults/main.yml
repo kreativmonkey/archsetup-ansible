@@ -1,0 +1,12 @@
+---
+# defaults file for sysctl
+
+# Kernel parameters applied by tasks/main.yml, for settings that belong to the
+# host rather than to a service. Service roles do not add entries here; they
+# call tasks/set.yml.
+sysctl_settings: []
+
+# The drop-in this role owns. /etc/sysctl.conf and the vendor files under
+# /usr/lib/sysctl.d stay untouched, so withdrawing a setting is a
+# state: absent instead of a hand edit.
+sysctl_file: /etc/sysctl.d/60-ansible.conf

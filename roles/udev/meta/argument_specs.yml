@@ -1,0 +1,48 @@
+---
+argument_specs:
+  main:
+    short_description: Install the udev rules declared for this host
+    options:
+      udev_rules:
+        type: list
+        elements: dict
+        required: false
+        description:
+          - Rules to install, in the shape C(add_rule) expects.
+      udev_rules_path:
+        type: str
+        required: false
+        default: /etc/udev/rules.d
+        description:
+          - Directory the rules are written to.
+
+  add_rule:
+    short_description: Install a single udev rule
+    description:
+      - >-
+        Entry point for other roles. Never write into /etc/udev/rules.d
+        outside this role, and never reload udev yourself — this role owns the
+        C(Reload udev) handler.
+    options:
+      udev_rule:
+        type: dict
+        required: true
+        description:
+          - The rule to install.
+        options:
+          name:
+            type: str
+            required: true
+            description:
+              - File name including the C(.rules) suffix, for example
+                C(99-uinput.rules). The numeric prefix decides the order.
+          content:
+            type: str
+            required: true
+            description: Complete content of the rule file.
+      udev_rules_path:
+        type: str
+        required: false
+        default: /etc/udev/rules.d
+        description:
+          - Directory the rule is written to.

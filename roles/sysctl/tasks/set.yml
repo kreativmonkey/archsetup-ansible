@@ -1,0 +1,12 @@
+---
+# ansible.posix.sysctl writes the drop-in and applies the value in the running
+# kernel in one step, which is why this role needs no reload handler.
+- name: Set {{ sysctl_setting.name }}
+  ansible.posix.sysctl:
+    name: "{{ sysctl_setting.name }}"
+    value: "{{ sysctl_setting.value | string }}"
+    sysctl_file: "{{ sysctl_setting.file | default(sysctl_file) }}"
+    sysctl_set: true
+    reload: true
+    state: "{{ sysctl_setting.state | default('present') }}"
+  become: true

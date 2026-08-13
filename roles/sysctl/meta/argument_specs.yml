@@ -1,0 +1,58 @@
+---
+argument_specs:
+  main:
+    short_description: Apply the kernel parameters declared for the host
+    options:
+      sysctl_settings:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description:
+          - Host level kernel parameters, in the shape C(set) expects.
+      sysctl_file:
+        type: str
+        required: false
+        default: /etc/sysctl.d/60-ansible.conf
+        description:
+          - Drop-in this role owns.
+
+  set:
+    short_description: Set a single kernel parameter
+    description:
+      - >-
+        Entry point for other roles. Never write to /etc/sysctl.conf or
+        /etc/sysctl.d outside this role.
+      - The value is applied in the running kernel and persisted in one step.
+    options:
+      sysctl_setting:
+        type: dict
+        required: true
+        description:
+          - The parameter to set.
+        options:
+          name:
+            type: str
+            required: true
+            description: Parameter name, for example C(net.ipv4.ip_forward).
+          value:
+            type: raw
+            required: true
+            description: Value to write, cast to a string.
+          file:
+            type: str
+            required: false
+            description:
+              - Drop-in to write into, defaults to C(sysctl_file).
+          state:
+            type: str
+            required: false
+            default: present
+            choices: [present, absent]
+            description: Whether the parameter should be set.
+      sysctl_file:
+        type: str
+        required: false
+        default: /etc/sysctl.d/60-ansible.conf
+        description:
+          - Drop-in used when an entry sets no C(file).

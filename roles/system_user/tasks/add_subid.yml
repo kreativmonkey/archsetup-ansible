@@ -1,0 +1,42 @@
+---
+# /etc/subuid and /etc/subgid map a host uid range into a user namespace.
+# useradd, usermod and podman all write these files, so this role owns single
+# lines in them, never the whole file.
+
+- name: Ensure the subordinate id files exist
+  ansible.builtin.copy:
+    content: ""
+    dest: "{{ __system_user_subid_file }}"
+    force: false
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  loop_control:
+    loop_var: __system_user_subid_file
+  loop: "{{ __system_user_subid_files }}"
+
+- name: Reserve the subordinate id range for {{ system_user_subid.name }}
+  ansible.builtin.lineinfile:
+    path: "{{ __system_user_subid_file }}"
+    regexp: '^{{ system_user_subid.name }}:\d+:\d+$'
+    line: >-
+      {{ system_user_subid.name }}:{{
+        system_user_subid.start | default(system_user_subid_start) }}:{{
+        system_user_subid.count | default(system_user_subid_count) }}
+    state: present
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  register: __system_user_subid_result
+  loop_control:
+    loop_var: __system_user_subid_file
+  loop: "{{ __system_user_subid_files }}"
+
+# Consumers have to re-read the range after it changed (podman keeps a copy in
+# its per-user storage). Exposed as a fact rather than a handler, because a
+# handler of this role must not know what podman needs.
+- name: Report whether the subordinate ids changed
+  ansible.builtin.set_fact:
+    system_user_subid_changed: "{{ __system_user_subid_result is changed }}"
