@@ -43,12 +43,12 @@ git_repositories: []
 # custom fields:
 #
 #   Address  DNS  SearchDomain  PublicKey  PresharedKey  AllowedIPs  Endpoint
-wireguard_interfaces: 
+wireguard_interfaces:
   - name: pudelab
     address: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='Address') | first }}"
     dns: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='DNS') | first }}"
     search_domains:
-       - "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='SearchDomain') | first }}"
+      - "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='SearchDomain') | first }}"
     mtu: 1300
     peers:
       - public_key: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='PublicKey') | first }}"

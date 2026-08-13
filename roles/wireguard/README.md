@@ -21,6 +21,26 @@ repository.
 It does **not** start or enable `wg-quick@<name>`. Bringing a tunnel up is a
 decision per boot, not per config run — `systemctl enable --now wg-quick@wg0`.
 
+## The vault has to be unlocked
+
+The interface definitions resolve their values through a lookup, and argument
+spec validation forces that lookup **before the role's first task**. With the
+role in `setup_workstation.yml`, a locked vault therefore fails the whole play:
+
+```
+The lookup plugin 'community.general.bitwarden' failed:
+Bitwarden Vault locked. Run 'bw unlock'.
+```
+
+Either `bw unlock` first, or skip the role:
+
+```console
+ansible-playbook -i localhost, --connection local --skip-tags wireguard setup_workstation.yml
+```
+
+`--skip-tags` is enough — a skipped task never evaluates its arguments, so the
+lookup does not run.
+
 ## Parameters
 
 `meta/argument_specs.yml` is the contract.
