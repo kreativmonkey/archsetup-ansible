@@ -1,0 +1,9 @@
+---
+# tasks file for sysctl
+
+- name: Apply the declared kernel parameters
+  ansible.builtin.include_tasks: set.yml
+  loop_control:
+    loop_var: sysctl_setting
+    label: "{{ sysctl_setting.name }}"
+  loop: "{{ sysctl_settings }}"

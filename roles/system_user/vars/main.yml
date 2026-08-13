@@ -1,0 +1,8 @@
+---
+# vars file for system_user
+
+# Shared files that hold one line per user. shadow-utils, useradd and podman
+# all write them, so this role owns single lines instead of the whole file.
+__system_user_subid_files:
+  - /etc/subuid
+  - /etc/subgid

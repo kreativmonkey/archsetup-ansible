@@ -1,0 +1,8 @@
+---
+- name: Create the group {{ system_user_group.name }}
+  ansible.builtin.group:
+    name: "{{ system_user_group.name }}"
+    gid: "{{ system_user_group.gid | default(omit) }}"
+    system: "{{ system_user_group.system | default(omit) }}"
+    state: "{{ system_user_group.state | default('present') }}"
+  become: true

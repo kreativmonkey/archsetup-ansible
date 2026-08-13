@@ -1,8 +1,20 @@
 ---
 # handlers file for udev
+#
+# These belong to this role, which is what makes `notify: Reload udev` work for
+# roles that add a rule through tasks/add_rule.yml.
+#
+# udevadm has no state to compare against — reloading is the whole point of the
+# call — so changed_when: true is the honest answer, not a workaround.
 - name: Reload udev
-  ansible.builtin.command: udevadm control --reload-rules
+  ansible.builtin.command:
+    cmd: udevadm control --reload-rules
+  become: true
+  changed_when: true
   notify: Trigger udev
 
 - name: Trigger udev
-  ansible.builtin.command: udevadm trigger
+  ansible.builtin.command:
+    cmd: udevadm trigger
+  become: true
+  changed_when: true

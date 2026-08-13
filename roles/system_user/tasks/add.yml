@@ -1,0 +1,34 @@
+---
+- name: Create the primary group of {{ system_user_account.name }}
+  ansible.builtin.group:
+    name: "{{ system_user_account.group | default(system_user_account.name) }}"
+    state: present
+  become: true
+
+- name: Create the secondary groups of {{ system_user_account.name }}
+  ansible.builtin.group:
+    name: "{{ __system_user_group.name }}"
+    gid: "{{ __system_user_group.gid | default(omit) }}"
+    system: "{{ __system_user_group.system | default(omit) }}"
+    state: present
+  become: true
+  loop_control:
+    loop_var: __system_user_group
+    label: "{{ __system_user_group.name }}"
+  loop: "{{ system_user_account.groups | default([]) }}"
+
+# append: true, never a plain replace. This role only knows the groups the
+# inventory declares, while service roles add their own through
+# add_to_group.yml. Replacing the list would silently drop the account out of
+# wheel, video, docker and everything else granted outside Ansible.
+- name: Create the account {{ system_user_account.name }}
+  ansible.builtin.user:
+    name: "{{ system_user_account.name }}"
+    uid: "{{ system_user_account.uid | default(omit) }}"
+    group: "{{ system_user_account.group | default(system_user_account.name) }}"
+    groups: "{{ system_user_account.groups | default([]) | map(attribute='name') | list }}"
+    append: true
+    shell: "{{ system_user_account.shell | default(omit) }}"
+    create_home: true
+    state: present
+  become: true

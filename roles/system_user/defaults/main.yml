@@ -1,0 +1,12 @@
+---
+# defaults file for system_user
+
+# Accounts kept in sync by tasks/main.yml. The inventory already describes the
+# workstation users under system_users, so that is the default source.
+system_user_accounts: "{{ system_users | default([]) }}"
+
+# First and last subordinate id handed out by tasks/add_subid.yml. 65536 ids
+# per user is what shadow-utils and podman expect; anything smaller breaks
+# rootless containers that map the full range.
+system_user_subid_start: 100000
+system_user_subid_count: 65536

@@ -1,0 +1,22 @@
+---
+# Entry point for service roles: a role that needs its user in a group asks
+# for it here instead of calling ansible.builtin.user itself. Several roles
+# add groups to the same account, and only append: true keeps them from
+# overwriting each other.
+
+- name: Create the groups requested for {{ system_user_membership.name }}
+  ansible.builtin.group:
+    name: "{{ __system_user_group }}"
+    state: present
+  become: true
+  loop_control:
+    loop_var: __system_user_group
+  loop: "{{ system_user_membership.groups }}"
+  when: system_user_membership.create_groups | default(true)
+
+- name: Add the requested groups to {{ system_user_membership.name }}
+  ansible.builtin.user:
+    name: "{{ system_user_membership.name }}"
+    groups: "{{ system_user_membership.groups }}"
+    append: true
+  become: true

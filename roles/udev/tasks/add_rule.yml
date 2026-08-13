@@ -1,0 +1,12 @@
+---
+# One file per rule, so a rule can be withdrawn with state: absent and two
+# roles never fight over the same file.
+- name: Install the rule {{ udev_rule.name }}
+  ansible.builtin.copy:
+    content: "{{ udev_rule.content }}"
+    dest: "{{ udev_rules_path }}/{{ udev_rule.name }}"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Reload udev

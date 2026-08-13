@@ -1,38 +1,44 @@
-Role Name
-=========
+# udev
 
-A brief description of the role goes here.
+Central role for udev rules. It owns `/etc/udev/rules.d` and the reload — no
+other role writes a rule file or calls `udevadm`.
 
-Requirements
-------------
+`whisrs` used to write `99-uinput.rules` itself and carried its own copy of the
+reload/trigger handlers. It calls `add_rule` now, and the `Reload udev` handler
+here fires for it.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+## Entry points
 
-Role Variables
---------------
+The rules declared for the host:
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+```yaml
+- name: Install udev rules
+  ansible.builtin.import_role:
+    name: udev
+```
 
-Dependencies
-------------
+A single rule, which is what service roles use:
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+```yaml
+- name: Allow the input group to write to uinput
+  ansible.builtin.include_role:
+    name: udev
+    tasks_from: add_rule
+  vars:
+    udev_rule:
+      name: 99-uinput.rules
+      content: |
+        KERNEL=="uinput", MODE="0660", GROUP="input"
+```
 
-Example Playbook
-----------------
+## Notes
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+- **One file per rule.** A rule can be withdrawn on its own, and two roles
+  never end up editing the same file.
+- **The numeric prefix is the sort order**, so it belongs in `name`.
+- **`udevadm` always reports changed.** There is no state to compare against —
+  the reload *is* the effect. Notifying the handler only when a rule file
+  actually changed is what keeps a run quiet.
+- **A rule that only relaxes permissions needs a trigger to take effect on
+  devices that are already present**, which is why `Reload udev` chains into
+  `Trigger udev`.

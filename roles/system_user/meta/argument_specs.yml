@@ -1,0 +1,171 @@
+---
+argument_specs:
+  main:
+    short_description: Apply every account the inventory declares
+    description:
+      - Creates the groups and accounts listed in C(system_user_accounts).
+      - >-
+        Group membership is always appended, so an account keeps the groups it
+        was granted outside Ansible.
+    options:
+      system_user_accounts:
+        type: list
+        elements: dict
+        required: false
+        description:
+          - Accounts to keep in sync. Defaults to the inventory C(system_users).
+        options:
+          name:
+            type: str
+            required: true
+            description: Login name.
+          group:
+            type: str
+            required: false
+            description: Primary group, defaults to the login name.
+          groups:
+            type: list
+            elements: dict
+            required: false
+            description: Secondary groups, each with at least a C(name).
+          uid:
+            type: int
+            required: false
+            description: Numeric user id, omitted when unset.
+          shell:
+            type: str
+            required: false
+            description: Login shell, omitted when unset.
+
+  add:
+    short_description: Create a single account with its groups
+    description:
+      - Entry point for one account in the shape C(main) loops over.
+    options:
+      system_user_account:
+        type: dict
+        required: true
+        description:
+          - The account to create.
+        options:
+          name:
+            type: str
+            required: true
+            description: Login name.
+          group:
+            type: str
+            required: false
+            description: Primary group, defaults to the login name.
+          groups:
+            type: list
+            elements: dict
+            required: false
+            description: Secondary groups, each with at least a C(name).
+          uid:
+            type: int
+            required: false
+            description: Numeric user id, omitted when unset.
+          shell:
+            type: str
+            required: false
+            description: Login shell, omitted when unset.
+
+  add_group:
+    short_description: Create a single group
+    description:
+      - Entry point for other roles. Never create groups outside this role.
+    options:
+      system_user_group:
+        type: dict
+        required: true
+        description:
+          - The group to create.
+        options:
+          name:
+            type: str
+            required: true
+            description: Group name.
+          gid:
+            type: int
+            required: false
+            description: Numeric group id, omitted when unset.
+          system:
+            type: bool
+            required: false
+            description: Create a system group.
+          state:
+            type: str
+            required: false
+            default: present
+            choices: [present, absent]
+            description: Whether the group should exist.
+
+  add_to_group:
+    short_description: Add an existing account to groups
+    description:
+      - >-
+        Entry point for service roles that need their user in a group, for
+        example C(video), C(render) or C(input). Membership is appended, so
+        several roles can add groups to the same account.
+    options:
+      system_user_membership:
+        type: dict
+        required: true
+        description:
+          - The account and the groups it joins.
+        options:
+          name:
+            type: str
+            required: true
+            description: Login name of an existing account.
+          groups:
+            type: list
+            elements: str
+            required: true
+            description: Group names to append.
+          create_groups:
+            type: bool
+            required: false
+            default: true
+            description: Create the groups when they do not exist yet.
+
+  add_subid:
+    short_description: Reserve a subordinate uid and gid range for an account
+    description:
+      - >-
+        Writes one line per account into /etc/subuid and /etc/subgid, the
+        ranges rootless containers map into their user namespace.
+      - >-
+        Sets the fact C(system_user_subid_changed) so the caller can refresh
+        whatever caches the range.
+    options:
+      system_user_subid:
+        type: dict
+        required: true
+        description:
+          - The account and the range it gets.
+        options:
+          name:
+            type: str
+            required: true
+            description: Login name of an existing account.
+          start:
+            type: int
+            required: false
+            description: First subordinate id, defaults to C(system_user_subid_start).
+          count:
+            type: int
+            required: false
+            description: Range size, defaults to C(system_user_subid_count).
+      system_user_subid_start:
+        type: int
+        required: false
+        default: 100000
+        description:
+          - First subordinate id handed out when an entry sets no C(start).
+      system_user_subid_count:
+        type: int
+        required: false
+        default: 65536
+        description:
+          - Range size used when an entry sets no C(count).

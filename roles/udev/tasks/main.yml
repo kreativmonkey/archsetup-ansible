@@ -1,13 +1,9 @@
 ---
 # tasks file for udev
-- name: Erstelle udev-Regel für USB-Serial-Adapter (ttyUSB / ttyACM)
-  ansible.builtin.copy:
-    dest: /etc/udev/rules.d/99-uart-usb.rules
-    content: |
-      # Lese- und Schreibzugriff auf USB-Serial-Adapter
-      KERNEL=="ttyUSB[0-9]*", MODE="0666"
-      KERNEL=="ttyACM[0-9]*", MODE="0666"
-    owner: root
-    group: root
-    mode: '0644'
-  notify: Reload udev
+
+- name: Install the rules declared for this host
+  ansible.builtin.include_tasks: add_rule.yml
+  loop_control:
+    loop_var: udev_rule
+    label: "{{ udev_rule.name }}"
+  loop: "{{ udev_rules }}"

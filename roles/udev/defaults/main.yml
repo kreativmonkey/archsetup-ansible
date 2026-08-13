@@ -1,3 +1,15 @@
-#SPDX-License-Identifier: MIT-0
 ---
 # defaults file for udev
+
+# Rules this host gets regardless of which service roles run. Service roles do
+# not add entries here; they call tasks/add_rule.yml.
+udev_rules:
+  - name: 99-uart-usb.rules
+    content: |
+      # Read and write access to USB serial adapters
+      KERNEL=="ttyUSB[0-9]*", MODE="0666"
+      KERNEL=="ttyACM[0-9]*", MODE="0666"
+
+# Directory the rules are written to. /etc overrides /usr/lib, so the
+# distribution's own rules stay untouched.
+udev_rules_path: /etc/udev/rules.d
