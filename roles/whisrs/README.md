@@ -11,6 +11,7 @@ leaves the machine.
 | **Build** | `rust` from the repositories, whisrs itself with `cargo install --locked`. |
 | **Typing** | `ydotool`, which needs `/dev/uinput` — the rule comes from the `udev` role. |
 | **Hotkey** | Read through evdev, so the user joins `input` via the `system_user` role. |
+| **Model** | `ggml-<model>.bin` from Hugging Face into `~/.local/share/whisrs/models`. |
 | **Config** | `~/.config/whisrs/config.toml`. |
 | **Service** | `whisrs.service` as a systemd **user** service. |
 
@@ -41,5 +42,13 @@ systemd tasks talk to that user's session bus.
 - **`cargo install` has no state-aware module.** It prints `Installed package` on
   a real install and `Ignored package … already installed` otherwise, which is
   the only handle `changed_when` has here.
-- **`Super+Ctrl` is a modifier-only hotkey.** whisrs grabs it through evdev, so it
-  works regardless of the compositor and needs no niri keybinding.
+- **The hotkey needs a real key.** whisrs reads the last element of the string as
+  the trigger and only the ones before it as modifiers, so `Super+Ctrl` is
+  refused and `Super+Shift+W` works. Grabbing happens through evdev, which is
+  why no niri keybinding is involved.
+- **`[local-whisper]` takes `model_path`, not a model name.** A model size in
+  there fails the whole file: whisrs discards the config, falls back to its
+  defaults — the Groq backend — and says so in a desktop notification.
+- **`whisrsd` takes no bus name.** The unit is `Type=simple`; `Type=dbus` waits
+  for a name that never appears until the start times out, and then restarts
+  forever.

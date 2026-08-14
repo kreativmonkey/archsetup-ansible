@@ -24,11 +24,13 @@ argument_specs:
       whisrs_model:
         type: str
         required: false
-        default: small
+        default: base
         description:
           - >-
-            Whisper model size. Bigger is more accurate and slower; C(small) is
-            where German dictation becomes usable.
+            whisper.cpp model. The role downloads C(ggml-<model>.bin) from
+            Hugging Face and points whisrs at that file. Bigger is more accurate
+            and slower; C(small) buys noticeably better German. The C(.en)
+            variants are English-only.
       whisrs_backend:
         type: str
         required: false
@@ -44,6 +46,9 @@ argument_specs:
       whisrs_hotkey:
         type: str
         required: false
-        default: Super+Ctrl
+        default: Super+Shift+W
         description:
           - Hotkey that toggles dictation, read through evdev.
+          - >-
+            The last element is the trigger key, so modifiers alone are
+            rejected: it has to be modifier(s) plus a key.

@@ -6,7 +6,7 @@ overlay = false
 notify = {{ whisrs_notify | lower }}
 
 [local-whisper]
-model = "{{ whisrs_model }}"
+model_path = "{{ __whisrs_model_path }}"
 
 [hotkeys]
 toggle = "{{ whisrs_hotkey }}"

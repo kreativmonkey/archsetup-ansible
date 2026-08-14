@@ -1,0 +1,12 @@
+---
+# vars file for whisrs
+
+# whisrs wants a path to a whisper.cpp ggml file, not a model name, so download
+# URL and destination are both derived from whisrs_model. The directory is the
+# one whisrs itself uses, which keeps a manual `whisrs setup` and this role on
+# the same files.
+__whisrs_model_file: "ggml-{{ whisrs_model }}.bin"
+__whisrs_model_dir: "/home/{{ whisrs_user }}/.local/share/whisrs/models"
+__whisrs_model_path: "{{ __whisrs_model_dir }}/{{ __whisrs_model_file }}"
+__whisrs_model_url: >-
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/{{ __whisrs_model_file }}

@@ -1,12 +1,20 @@
 [Unit]
 Description=whisrs — voice-to-text daemon
-After=pipewire.service
+Documentation=https://github.com/y0sif/whisrs
+After=graphical-session.target
 
 [Service]
-Type=dbus
-BusName=dev.y0sif.whisrs.Daemon
+# whisrsd stays in the foreground and takes no bus name. Type=dbus lets systemd
+# wait for a name that never appears, which ends in a start timeout and a
+# restart loop.
+Type=simple
 ExecStart=/home/{{ whisrs_user }}/.cargo/bin/whisrsd
 Restart=on-failure
+RestartSec=3
+
+# Window tracking asks the compositor which window has focus, so it needs the
+# variables of the graphical session.
+PassEnvironment=NIRI_SOCKET HYPRLAND_INSTANCE_SIGNATURE SWAYSOCK WAYLAND_DISPLAY DISPLAY XAUTHORITY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_RUNTIME_DIR
 
 [Install]
 WantedBy=default.target
