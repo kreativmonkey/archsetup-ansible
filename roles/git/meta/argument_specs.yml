@@ -186,3 +186,94 @@ argument_specs:
         required: false
         description:
           - Root of the project tree and its ownership.
+
+  checkout:
+    short_description: Check out a repository at a given path and owner
+    description:
+      - >-
+        Entry point for roles that need a working copy outside the project tree
+        — a fixed path, a different owner, and a checkout that follows its
+        remote. Never call C(ansible.builtin.git) outside this role.
+      - >-
+        Distinct from C(clone) on purpose: C(clone) derives the path from the URL
+        so the includeIf identities match and leaves an existing checkout alone,
+        while C(checkout) puts the tree exactly where the caller says and updates
+        it.
+    options:
+      git_checkout:
+        type: dict
+        required: true
+        description:
+          - The working copy to establish.
+        options:
+          repo:
+            type: str
+            required: true
+            description: Clone URL.
+          dest:
+            type: str
+            required: true
+            description: Absolute path of the working copy.
+          version:
+            type: str
+            required: false
+            default: HEAD
+            description: Branch, tag or commit to check out.
+          owner:
+            type: str
+            required: false
+            default: root
+            description:
+              - >-
+                Account the checkout runs as and belongs to. It needs write
+                access to the parent of C(dest).
+          group:
+            type: str
+            required: false
+            description: Group of the top directory, defaults to C(owner).
+          mode:
+            type: str
+            required: false
+            description:
+              - >-
+                Mode of the top directory. Set it when the repository carries
+                secrets — the git module creates the tree under the caller's
+                umask, so restricting the top directory is what keeps the
+                contents out of reach.
+          key_file:
+            type: str
+            required: false
+            description:
+              - >-
+                SSH private key for the fetch. Needed whenever C(owner) has no
+                key of its own for the forge, which is the normal case for root.
+                It must not be passphrase protected — there is nothing to unlock
+                it with.
+          accept_hostkey:
+            type: bool
+            required: false
+            default: true
+            description:
+              - >-
+                Add an unknown host key instead of failing. C(owner) usually has
+                no known_hosts entry for the forge.
+          pull:
+            type: bool
+            required: false
+            default: true
+            description:
+              - >-
+                Fetch and fast-forward an existing checkout. False makes this
+                behave like C(clone) and only create what is missing.
+              - >-
+                Named C(pull) and not C(update) on purpose: a key named after a
+                dict method resolves to that method in a template, and no
+                C(default) can catch it.
+          force:
+            type: bool
+            required: false
+            default: false
+            description:
+              - >-
+                Discard local modifications on update. Leave it off unless the
+                working copy is disposable.

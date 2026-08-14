@@ -117,7 +117,7 @@ entry points. Reading is free, writing is not.
 | `sysctl` | `/etc/sysctl.d/60-ansible.conf` | `set` |
 | `udev` | `/etc/udev/rules.d`, the udev reload | `add_rule` |
 | `sshd` | `~/.ssh`, `~/.ssh/config` | `keygen`, `add_host` |
-| `git` | the global git configuration | `clone` |
+| `git` | the global git configuration, all checkouts | `clone`, `checkout` |
 | `opencode` | `opencode.json` | `add_provider`, `add_mcp_server` |
 | `pacman` | `/etc/pacman.conf` | — |
 | `aur` | the AUR helper, the build account, `/etc/sudoers.d/zz-ansible-aur` | `install` |
