@@ -1,0 +1,15 @@
+---
+# defaults file for openvpn
+
+# Tunnels to configure, one NetworkManager profile each. Empty by default on
+# purpose: a tunnel definition is host data, so it belongs in the inventory, and
+# every value in it that names your infrastructure should come from a lookup
+# rather than from a literal in this repository.
+#
+# See README.md for the shape and for a Bitwarden-backed example.
+openvpn_tunnels: []
+
+# Check the things that otherwise fail silently: that /etc/resolv.conf is really
+# handed to systemd-resolved, and that the profile NetworkManager imported ended
+# up with the split policy this role asked for.
+openvpn_verify: true

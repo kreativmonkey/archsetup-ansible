@@ -1,0 +1,32 @@
+---
+# vars file for openvpn
+
+# A tunnel's effective split settings are these merged with what it declares.
+# enable defaults to true, like the NixOS module this role was derived from.
+__openvpn_split_defaults:
+  enable: true
+  routes: []
+  dns: []
+  routing_domains: []
+
+# What nmcli accepts as one entry of ipv4.routes: an IPv4 address, optionally
+# with a prefix, optionally followed by a next hop and a metric. Only the address
+# is checked here — anchored, so shell style shorthand ("10.11.{3,5}.0/24") and
+# an octet left off (".128/32") are caught instead of travelling on to nmcli.
+__openvpn_route_pattern: >-
+  ^((25[0-5]|2[0-4][0-9]|1?[0-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1?[0-9]?[0-9])(/(3[0-2]|[12]?[0-9]))?( |$)
+
+# Secret flags this role sets on an imported profile, as vpn.data items.
+#
+# 1 means AGENT_OWNED: NetworkManager asks the secret agent in the desktop
+# session for the value, and gnome-keyring stores it in the login keyring. The
+# default of 0 would mean "the system stores it" — which is NetworkManager
+# writing the password in clear text into the profile under
+# /etc/NetworkManager/system-connections, exactly what the keyring is there to
+# avoid.
+#
+#   password   the account password the profile asks for
+#   cert-pass  the passphrase of an encrypted private key
+__openvpn_agent_owned_secrets:
+  - password
+  - cert-pass

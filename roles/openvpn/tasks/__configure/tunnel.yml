@@ -1,0 +1,265 @@
+---
+# One tunnel: the checkout its profile comes from, the NetworkManager profile
+# imported from it, and the split policy this role owns on that profile. Private
+# include, looped from main.yml once per entry in openvpn_tunnels.
+#
+# The .nmconnection file itself is NOT written here. NetworkManager owns it and
+# rewrites it whenever the profile changes — from the desktop applet too — so
+# this role goes through nmcli and owns named properties, never the file.
+
+# A relative profile_path names the site inside the repository and says nothing
+# about where this host keeps the checkout — that is what profile_repo.dest is
+# for. Resolving one against the other only works if there is a dest to resolve
+# against.
+- name: Assert a resolvable profile path for {{ openvpn_tunnel.name }}
+  ansible.builtin.assert:
+    that:
+      - >-
+        openvpn_tunnel.profile_path is match('^/')
+        or ('profile_repo' in openvpn_tunnel
+            and 'dest' in openvpn_tunnel.profile_repo)
+    fail_msg: >-
+      profile_path of {{ openvpn_tunnel.name }} is relative
+      ({{ openvpn_tunnel.profile_path }}), but the tunnel has no profile_repo
+      with a dest to resolve it against. Either give it one, or make
+      profile_path absolute.
+    quiet: true
+
+- name: Resolve the paths and split settings of {{ openvpn_tunnel.name }}
+  ansible.builtin.set_fact:
+    __openvpn_profile_path: >-
+      {{ openvpn_tunnel.profile_path
+         if openvpn_tunnel.profile_path is match('^/')
+         else openvpn_tunnel.profile_repo.dest ~ '/'
+              ~ openvpn_tunnel.profile_path }}
+    __openvpn_nm_id: >-
+      {{ openvpn_tunnel.connection_name | default(openvpn_tunnel.name) }}
+    __openvpn_split: >-
+      {{ __openvpn_split_defaults
+         | combine(openvpn_tunnel.split_tunnel | default({})) }}
+
+# The properties this role owns on the profile, and nothing else. Everything
+# openvpn-specific stays as the import derived it from the .ovpn.
+#
+# never-default keeps the tunnel from becoming the default route, and the two
+# ignore-auto switches drop what the server pushes — together they are the
+# NetworkManager equivalent of route-nopull. The explicit routes and resolvers
+# come back on top.
+#
+# autoconnect stays off: bringing a tunnel up is a decision per session, not per
+# configuration run. That is also what makes the applet the way to start it.
+- name: Resolve the split policy of {{ openvpn_tunnel.name }}
+  ansible.builtin.set_fact:
+    __openvpn_nm_imported_id: >-
+      {{ __openvpn_profile_path | basename | splitext | first }}
+    __openvpn_nm_arguments: []
+    __openvpn_nm_policy:
+      connection.autoconnect: "no"
+      ipv4.never-default: "{{ 'yes' if __openvpn_split.enable else 'no' }}"
+      ipv4.ignore-auto-routes: "{{ 'yes' if __openvpn_split.enable else 'no' }}"
+      ipv4.ignore-auto-dns: "{{ 'yes' if __openvpn_split.enable else 'no' }}"
+      ipv4.routes: "{{ __openvpn_split.routes | join(',') }}"
+      ipv4.dns: "{{ __openvpn_split.dns | join(',') }}"
+      ipv4.dns-search: "{{ __openvpn_split.routing_domains | join(',') }}"
+      ipv6.never-default: "{{ 'yes' if __openvpn_split.enable else 'no' }}"
+      ipv6.ignore-auto-routes: "{{ 'yes' if __openvpn_split.enable else 'no' }}"
+      ipv6.ignore-auto-dns: "{{ 'yes' if __openvpn_split.enable else 'no' }}"
+
+# The same guard the NixOS module carries as an assertion: without explicit
+# routes the tunnel comes up and carries nothing, and without zones nothing is
+# resolved internally. Both look like a working VPN from the outside.
+- name: Assert a complete split tunnel for {{ openvpn_tunnel.name }}
+  ansible.builtin.assert:
+    that:
+      - __openvpn_split.routes | length > 0
+      - __openvpn_split.dns | length > 0
+      - __openvpn_split.routing_domains | length > 0
+    fail_msg: >-
+      split_tunnel is on for {{ openvpn_tunnel.name }}, but routes, dns or
+      routing_domains is empty. With the pushed routes ignored and no explicit
+      route no traffic reaches the tunnel at all, and without zones nothing
+      resolves internally. Fill in all three, or set split_tunnel.enable to false
+      and take the full tunnel as the server pushes it.
+    quiet: true
+  when: __openvpn_split.enable
+
+# nmcli validates ipv4.routes only when the whole property set is written, and it
+# reports the first bad entry in the language of the desktop — a long way from
+# the list it came out of. Checked here instead, where the offending entries can
+# be named. A hand written list is where the shorthands creep in: a leading dot
+# for "same /24 as above", or shell style braces for a range of octets. nmcli
+# takes neither.
+- name: Collect the unroutable entries of {{ openvpn_tunnel.name }}
+  ansible.builtin.set_fact:
+    __openvpn_bad_routes: >-
+      {{ __openvpn_split.routes | map('trim') | reject('equalto', '')
+         | reject('search', __openvpn_route_pattern) | list }}
+  when: __openvpn_split.enable
+
+- name: Assert routable entries in the split policy of {{ openvpn_tunnel.name }}
+  ansible.builtin.assert:
+    that:
+      - __openvpn_bad_routes | length == 0
+    fail_msg: >-
+      routes of {{ openvpn_tunnel.name }} carries entries nmcli cannot read as a
+      route: {{ __openvpn_bad_routes | join(', ') }}. Every entry is one IPv4
+      address with an optional prefix — no leading dot for "same network as the
+      entry above", no shell style braces for a range of octets. Write them out.
+    quiet: true
+  when: __openvpn_split.enable
+
+# A profile is never a single file: it references its CA, certificate, key and
+# tls-auth key by relative name, so the whole directory has to arrive together.
+# NetworkManager stores absolute paths to those files at import time, which is
+# why the checkout has to live somewhere permanent.
+- name: Check out the profile repository of {{ openvpn_tunnel.name }}
+  ansible.builtin.include_role:
+    name: git
+    tasks_from: checkout
+  vars:
+    git_checkout: "{{ openvpn_tunnel.profile_repo }}"
+  when: openvpn_tunnel.profile_repo is defined
+
+- name: Read the state of the profile of {{ openvpn_tunnel.name }}
+  ansible.builtin.stat:
+    path: "{{ __openvpn_profile_path }}"
+  become: true
+  register: __openvpn_profile
+
+- name: Assert the presence of the profile of {{ openvpn_tunnel.name }}
+  ansible.builtin.assert:
+    that:
+      - __openvpn_profile.stat.exists | default(false)
+    fail_msg: >-
+      {{ __openvpn_profile_path }} is missing. Either give the tunnel a
+      profile_repo so this role checks the profiles out, or put the .ovpn and the
+      files it references there yourself.
+    quiet: true
+  when: not ansible_check_mode
+
+- name: Read the existing NetworkManager profiles
+  ansible.builtin.command:
+    argv: [nmcli, --get-values, NAME, connection, show]
+  become: true
+  register: __openvpn_nm_profiles
+  changed_when: false
+  check_mode: false
+
+# Import rather than compose the profile: the remote, the data cipher, the auth
+# digest, the tls-auth direction and the paths of the four referenced files all
+# come out of the .ovpn this way instead of being restated here and drifting from
+# it. community.general.nmcli cannot do this — its C(vpn) type models PPTP and
+# L2TP only and has no ca, cert, key or ta.
+- name: Import into NetworkManager the profile of {{ openvpn_tunnel.name }}
+  ansible.builtin.command:
+    argv:
+      - nmcli
+      - connection
+      - import
+      - type
+      - openvpn
+      - file
+      - "{{ __openvpn_profile_path }}"
+  become: true
+  changed_when: true
+  when:
+    - __openvpn_nm_id not in __openvpn_nm_profiles.stdout_lines
+    - __openvpn_nm_imported_id not in __openvpn_nm_profiles.stdout_lines
+
+# nmcli names an imported profile after the file it came from, minus the
+# extension. Knowing that is what lets this file run twice: the import is skipped
+# once either name exists, and this turns the one into the other.
+- name: Rename the imported profile of {{ openvpn_tunnel.name }}
+  ansible.builtin.command:
+    argv:
+      - nmcli
+      - connection
+      - modify
+      - "{{ __openvpn_nm_imported_id }}"
+      - connection.id
+      - "{{ __openvpn_nm_id }}"
+  become: true
+  changed_when: true
+  when:
+    - __openvpn_nm_id != __openvpn_nm_imported_id
+    - __openvpn_nm_id not in __openvpn_nm_profiles.stdout_lines
+
+- name: Read the owned properties of {{ openvpn_tunnel.name }}
+  ansible.builtin.command:
+    argv:
+      - nmcli
+      - --get-values
+      - "{{ __openvpn_nm_property.key }}"
+      - connection
+      - show
+      - "{{ __openvpn_nm_id }}"
+  become: true
+  register: __openvpn_nm_read
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  loop_control:
+    loop_var: __openvpn_nm_property
+    label: "{{ __openvpn_nm_property.key }}"
+  loop: "{{ __openvpn_nm_policy | dict2items }}"
+
+# Compared as normalised sets, never as strings. nmcli picks its own separators
+# and ordering for list valued properties, and it may echo a route back with the
+# next hop or a metric appended — so each entry is reduced to its first token and
+# the whole thing is sorted. Comparing raw strings would report a change on every
+# single run.
+- name: Collect the drifting properties of {{ openvpn_tunnel.name }}
+  ansible.builtin.set_fact:
+    __openvpn_nm_arguments: >-
+      {{ __openvpn_nm_arguments
+         + [__openvpn_nm_result.__openvpn_nm_property.key,
+            __openvpn_nm_result.__openvpn_nm_property.value] }}
+  loop_control:
+    loop_var: __openvpn_nm_result
+    label: "{{ __openvpn_nm_result.__openvpn_nm_property.key }}"
+  loop: "{{ __openvpn_nm_read.results }}"
+  when: >-
+    (__openvpn_nm_result.stdout | default('', true) | split(',') | map('trim')
+     | reject('equalto', '') | map('split', ' ') | map('first') | sort | list)
+    != (__openvpn_nm_result.__openvpn_nm_property.value | split(',')
+        | map('trim') | reject('equalto', '') | map('split', ' ')
+        | map('first') | sort | list)
+
+- name: Apply the split policy of {{ openvpn_tunnel.name }}
+  ansible.builtin.command:
+    argv: >-
+      {{ ['nmcli', 'connection', 'modify', __openvpn_nm_id]
+         + __openvpn_nm_arguments }}
+  become: true
+  changed_when: true
+  when: __openvpn_nm_arguments | length > 0
+
+- name: Read the vpn data of {{ openvpn_tunnel.name }}
+  ansible.builtin.command:
+    argv: [nmcli, --get-values, vpn.data, connection, show, "{{ __openvpn_nm_id }}"]
+  become: true
+  register: __openvpn_nm_vpn_data
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+# Secret flags live inside vpn.data, next to ca, cert and key. `+vpn.data` adds
+# or replaces a single key; a bare `vpn.data` would replace the whole dictionary
+# and take the certificate paths with it.
+- name: Hand to the keyring the secrets of {{ openvpn_tunnel.name }}
+  ansible.builtin.command:
+    argv:
+      - nmcli
+      - connection
+      - modify
+      - "{{ __openvpn_nm_id }}"
+      - +vpn.data
+      - "{{ __openvpn_secret }}-flags=1"
+  become: true
+  changed_when: true
+  loop_control:
+    loop_var: __openvpn_secret
+  loop: "{{ __openvpn_agent_owned_secrets }}"
+  when: >-
+    __openvpn_nm_vpn_data.stdout | default('')
+    is not search(__openvpn_secret ~ '-flags\s*=\s*1')
