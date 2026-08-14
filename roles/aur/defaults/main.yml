@@ -1,0 +1,31 @@
+---
+# defaults file for aur
+
+# Helper command every AUR install goes through. Passed to kewlfft.aur.aur as
+# `use`, so only a value that module knows works: yay, paru, pacaur, trizen,
+# pikaur, aurman, makepkg or auto.
+aur_helper: yay
+
+# AUR package that provides aur_helper. Only differs when you want a prebuilt
+# variant — yay-bin ships the same `yay` command without pulling in the Go
+# toolchain to build it.
+aur_helper_package: "{{ aur_helper }}"
+
+# Unprivileged account the packages are built as. makepkg refuses to run as
+# root, so this must not be root.
+aur_build_user: "{{ system_users[0].name }}"
+
+# Password-less `pacman` for aur_build_user, in a sudoers drop-in this role
+# owns. makepkg hands the package it built to `pacman -U` through sudo, from a
+# process that has no terminal — without this rule an unattended AUR install
+# cannot get past that call.
+#
+# Weigh it before leaving it on: `pacman` installs arbitrary packages and runs
+# their hooks as root, so the rule makes aur_build_user root-equivalent without
+# a password. Set it to false and grant the right yourself if that is not
+# acceptable on this host; the role then removes its drop-in again.
+aur_sudoers_dropin: true
+
+# AUR packages this host wants for its own sake, installed in one transaction.
+# Roles do not list their packages here — they call the install entry point.
+aur_packages: []

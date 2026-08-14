@@ -1,0 +1,14 @@
+---
+# tasks file for aur
+
+- name: Establish AUR access
+  ansible.builtin.include_tasks: __ensure/access.yml
+
+# One include, not a loop: the module resolves a whole list in a single
+# transaction and warns explicitly against looping over it.
+- name: Install the AUR packages declared for this host
+  ansible.builtin.include_tasks: install.yml
+  when: aur_packages | length > 0
+  vars:
+    aur_package:
+      name: "{{ aur_packages }}"

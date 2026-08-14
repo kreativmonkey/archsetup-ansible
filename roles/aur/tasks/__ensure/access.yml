@@ -1,0 +1,92 @@
+---
+# Everything an AUR install needs before it can run: the toolchain, the sudo
+# rule makepkg installs through, and the helper itself. Private include, called
+# by main.yml and by install.yml — an entry point that assumes main.yml already
+# ran is an entry point that fails when somebody calls it with --tags.
+#
+# Guarded by __aur_access_ready in the caller, so this runs once per play no
+# matter how many roles ask for a package.
+
+# makepkg needs a toolchain and git to fetch and build a PKGBUILD. Both come
+# from the official repositories, so this part stays privileged.
+- name: Install the build prerequisites
+  community.general.pacman:
+    name:
+      - base-devel
+      - git
+    state: present
+  become: true
+
+# Own drop-in, never /etc/sudoers: that file belongs to the sudo package.
+# visudo validates it before it is put in place — a syntax error in
+# /etc/sudoers.d locks out sudo for everybody, and `backup:` would not help
+# because nothing would be left to run the restore with.
+- name: Allow the build user to run pacman without a password
+  ansible.builtin.copy:
+    content: |
+      {{ __aur_managed_header }}
+      {{ aur_build_user }} ALL=(root) NOPASSWD: /usr/bin/pacman
+    dest: "{{ __aur_sudoers_file }}"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: visudo -cf %s
+  become: true
+  when: aur_sudoers_dropin
+
+- name: Withdraw the password-less pacman rule
+  ansible.builtin.file:
+    path: "{{ __aur_sudoers_file }}"
+    state: absent
+  become: true
+  when: not aur_sudoers_dropin
+
+# Writing the rule is not the same as the rule taking effect: a broad rule read
+# after it wins, and then makepkg fails three minutes later with a message that
+# says nothing about sudoers. Probe it as the account that will need it, with the
+# exact command yay runs.
+- name: Check the build user can run pacman without a password
+  ansible.builtin.command:
+    cmd: sudo -n /usr/bin/pacman --version
+  become: true
+  become_user: "{{ aur_build_user }}"
+  register: __aur_sudo_probe
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when: aur_sudoers_dropin
+
+- name: Assert the password-less pacman rule is in effect
+  ansible.builtin.assert:
+    that:
+      - __aur_sudo_probe.rc == 0
+    fail_msg: >-
+      {{ aur_build_user }} still needs a password for pacman, even though
+      {{ __aur_sudoers_file }} grants it. sudo applies the LAST matching rule,
+      not the most specific one, so something read after this file takes it back.
+      Run `sudo -l` and look for a broader entry listed BELOW the
+      "NOPASSWD: /usr/bin/pacman" line. If it comes from a drop-in, this file has
+      to sort after it; if it comes from /etc/sudoers itself, then
+      "@includedir /etc/sudoers.d" sits before that rule and has to be moved to
+      the end of the file. Without this, no AUR package can be installed
+      unattended.
+    quiet: true
+  when:
+    - aur_sudoers_dropin
+    - not ansible_check_mode
+
+# The helper is the one AUR package that cannot be installed by a helper.
+# `use: makepkg` breaks that circle: kewlfft.aur.aur clones the PKGBUILD and
+# builds it as the unprivileged account. Every later install goes through
+# aur_helper instead.
+- name: Install the AUR helper
+  kewlfft.aur.aur:
+    name: "{{ aur_helper_package }}"
+    use: makepkg
+    state: present
+  become: true
+  become_user: "{{ aur_build_user }}"
+
+- name: Record that AUR access is established
+  ansible.builtin.set_fact:
+    __aur_access_ready: true
