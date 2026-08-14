@@ -33,8 +33,9 @@ just verify     # apply twice — the second run must report changed=0
 ```
 
 > [!NOTE]
-> The WireGuard tunnels resolve every value through Bitwarden, so `just run`
-> wants an unlocked vault. Without one: `--skip-tags wireguard`.
+> The WireGuard and OpenVPN tunnels resolve every value through Bitwarden, so
+> `just run` wants an unlocked vault. Without one:
+> `--skip-tags wireguard,openvpn`.
 
 ## Layout
 
@@ -56,10 +57,12 @@ roles/                    one role per owned piece of state
 | `system_user` | local accounts, groups and subordinate id ranges |
 | `pacman` | `/etc/pacman.conf` — output flags, parallel downloads, repositories |
 | `common` | the base package set every host gets |
+| `aur` | AUR access: helper, build account and its sudoers drop-in |
 | `podman` | rootless containers, optionally as the docker replacement |
 | `udev` | `/etc/udev/rules.d` and the reload |
 | `firewalld` | firewalld with the nftables backend, `IPv6_rpfilter` |
 | `wireguard` | one key pair and one `wg-quick` config per tunnel |
+| `openvpn` | one NetworkManager split tunnel per `.ovpn` profile |
 | `vim` | a Neovim distribution, switchable between two |
 | `nix` | the nix package manager and `nix-daemon` |
 | `direnv` | direnv hooked into fish and bash, plus nix-direnv |
@@ -67,6 +70,7 @@ roles/                    one role per owned piece of state
 | `gnome_keyring` | keyring and polkit agent for a niri (Wayland) session |
 | `ollama` | ollama with a GPU acceleration backend |
 | `opencode` | language servers and the rendered `opencode.json` |
+| `whisrs` | local voice dictation with a hotkey |
 
 </details>
 
@@ -83,7 +87,6 @@ roles/                    one role per owned piece of state
 | `headroom` | the headroom context compression proxy as a user service |
 | `obs_studio` | obs-studio with what it needs on Wayland |
 | `tuxedo` | TUXEDO hardware support (`tuxedo-drivers`, AUR) |
-| `whisrs` | local voice dictation with a hotkey |
 
 Enable one by adding an `import_role` task to the playbook — except `sysctl`,
 which is a central role and is only ever reached through `include_role`.
