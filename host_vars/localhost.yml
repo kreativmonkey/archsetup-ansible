@@ -56,3 +56,58 @@ wireguard_interfaces:
         allowed_ips: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='AllowedIPs') | first }}"
         endpoint: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='Endpoint') | first }}"
         persistent_keepalive: 25
+
+# --- openvpn ----------------------------------------------------------------
+# The Puzzle VPN as a split tunnel: only the internal networks are routed
+# through it, only the internal zones are resolved by the internal resolvers.
+#
+# Same rule as for wireguard above — no internal address, resolver or zone in
+# this public repository. One Bitwarden item, "Puzzle VPN", as custom fields:
+#
+#   ProfileRepo      clone URL of the profile repository
+#   ProfilePath      the .ovpn to use, relative to the checkout below, so that
+#                    the item names the site and not this host's layout
+#   Routes           internal networks, CIDR, comma separated
+#   DNS              internal resolvers, comma separated
+#   RoutingDomains   internally resolved zones, comma separated
+#
+# No credential here, on purpose. The tunnel is a NetworkManager profile with
+# agent-owned secrets, so the account password and the certificate passphrase are
+# asked once on the first connect and then live in the login keyring. Ansible
+# never sees them.
+#
+# The whole directory is checked out, not just the .ovpn: a profile references
+# its CA, certificate and keys by relative name, and NetworkManager stores
+# absolute paths to them at import time — so the checkout has to stay put. root
+# fetches it and borrows the SSH key of the login account, having none of its own
+# for the forge.
+#
+# The role imports the profile and activates nothing. Start it from the network
+# menu, or:
+#   nmcli connection up "Puzzle VPN BE3" --ask
+openvpn_tunnels:
+  - name: puzzle
+    connection_name: Puzzle VPN BE3
+    profile_repo:
+      repo: >-
+        {{ lookup('community.general.bitwarden', 'Puzzle VPN',
+                  field='ProfileRepo') | first }}
+      dest: /etc/openvpn/puzzle
+      version: main
+      owner: root
+      mode: "0700"
+      key_file: "/home/{{ system_users[0].name }}/.ssh/id_ed25519"
+    profile_path: >-
+      {{ lookup('community.general.bitwarden', 'Puzzle VPN',
+                field='ProfilePath') | first }}
+    split_tunnel:
+      routes: >-
+        {{ lookup('community.general.bitwarden', 'Puzzle VPN', field='Routes')
+           | first | split(',') | map('trim') | list }}
+      dns: >-
+        {{ lookup('community.general.bitwarden', 'Puzzle VPN', field='DNS')
+           | first | split(',') | map('trim') | list }}
+      routing_domains: >-
+        {{ lookup('community.general.bitwarden', 'Puzzle VPN',
+                  field='RoutingDomains') | first | split(',') | map('trim')
+           | list }}

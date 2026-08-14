@@ -1,0 +1,68 @@
+---
+# tasks file for openvpn
+
+# networkmanager-openvpn pulls in openvpn itself, but the plugin is the thing
+# that matters here and naming both says which of the two this role depends on.
+- name: Install the openvpn client and the NetworkManager plugin
+  community.general.pacman:
+    name:
+      - openvpn
+      - networkmanager-openvpn
+    state: present
+  become: true
+
+- name: Start NetworkManager
+  ansible.builtin.systemd_service:
+    name: NetworkManager.service
+    state: started
+    enabled: true
+  become: true
+
+# Split DNS is systemd-resolved's job. NetworkManager hands a link's resolvers
+# and domains to it over DBus instead of overwriting /etc/resolv.conf, which is
+# what makes a per-zone resolver possible at all.
+- name: Start systemd-resolved
+  ansible.builtin.systemd_service:
+    name: systemd-resolved.service
+    state: started
+    enabled: true
+  become: true
+  when: openvpn_tunnels | length > 0
+
+- name: Read the resolver configuration
+  ansible.builtin.stat:
+    path: /etc/resolv.conf
+  register: __openvpn_resolv_conf
+  when:
+    - openvpn_tunnels | length > 0
+    - openvpn_verify
+
+# Deliberately an assertion and not a fix: glibc reads /etc/resolv.conf, so
+# without the stub symlink the per-link domains are set over DBus and read by
+# nobody. Enforcing the symlink is not this role's call either — NetworkManager
+# writes that file itself unless it is set to systemd-resolved.
+- name: Assert /etc/resolv.conf is handed to systemd-resolved
+  ansible.builtin.assert:
+    that:
+      - __openvpn_resolv_conf.stat.islnk | default(false)
+      - >-
+        __openvpn_resolv_conf.stat.lnk_target | default('')
+        is search('systemd/resolve')
+    fail_msg: >-
+      /etc/resolv.conf is not a symlink into systemd-resolved's runtime
+      directory, so split DNS would be set over DBus and read by nobody. Link
+      it with `ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf`,
+      and if NetworkManager keeps overwriting it, set dns=systemd-resolved in
+      its configuration.
+    quiet: true
+  when:
+    - openvpn_tunnels | length > 0
+    - openvpn_verify
+    - not ansible_check_mode
+
+- name: Configure the tunnels
+  ansible.builtin.include_tasks: __configure/tunnel.yml
+  loop_control:
+    loop_var: openvpn_tunnel
+    label: "{{ openvpn_tunnel.name }}"
+  loop: "{{ openvpn_tunnels }}"

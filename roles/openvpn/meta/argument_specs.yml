@@ -1,0 +1,134 @@
+---
+argument_specs:
+  main:
+    short_description: Configure OpenVPN tunnels as split tunnels in NetworkManager
+    description:
+      - >-
+        Imports one NetworkManager profile per entry in C(openvpn_tunnels) from
+        its C(.ovpn), and owns the split tunnel and split DNS policy on that
+        profile so everything but the declared networks and zones stays out of
+        the tunnel.
+      - >-
+        The profile is managed through C(nmcli), never by writing the
+        C(.nmconnection) file. NetworkManager owns that file and rewrites it
+        whenever the profile changes, the desktop applet included.
+      - >-
+        Secrets are marked agent owned, so NetworkManager asks the desktop
+        session for them and gnome-keyring keeps them in the login keyring. This
+        role never sees or stores a password.
+      - >-
+        Derived from the NixOS module C(puzzle.vpn.puzzle), and it keeps that
+        module's contract: the C(.ovpn) profile with the key material is not part
+        of the configuration this role owns.
+      - >-
+        It does not activate a tunnel and leaves C(autoconnect) off. Bringing one
+        up is a decision per session — that is what the applet is for.
+    options:
+      openvpn_tunnels:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description:
+          - Tunnels to configure, one NetworkManager profile each.
+        options:
+          name:
+            type: str
+            required: true
+            description:
+              - >-
+                Name of the tunnel within this role. Also the profile name unless
+                C(connection_name) says otherwise.
+          connection_name:
+            type: str
+            required: false
+            description:
+              - >-
+                Profile name as it appears in the desktop network menu, for
+                example C(Puzzle VPN BE3). Defaults to C(name).
+          profile_path:
+            type: str
+            required: true
+            description:
+              - >-
+                The C(.ovpn) profile to import. Relative to C(profile_repo.dest)
+                unless it starts with a slash, so it can name the site inside the
+                repository — C(BE3/puzzle_vpn_be3.ovpn) — and stay silent about
+                where this host keeps the checkout.
+              - >-
+                It has to sit next to the files the profile references: a profile
+                names its CA, certificate and keys relatively, and
+                NetworkManager stores absolute paths to them at import time.
+          profile_repo:
+            type: dict
+            required: false
+            description:
+              - >-
+                Repository the profile comes from, handed to the C(git) role's
+                C(checkout) entry point verbatim — see its argument spec for the
+                shape. Omit it to manage the profile directory outside Ansible;
+                the role then only checks that the profile is there.
+              - >-
+                A checkout owned by root needs C(key_file), because root has no
+                key of its own for the forge. It also has to be somewhere
+                permanent, because the imported profile keeps pointing at it.
+          split_tunnel:
+            type: dict
+            required: false
+            description:
+              - >-
+                Which networks and zones the tunnel is responsible for. Defaults
+                to enabled, which makes all three lists below mandatory.
+            options:
+              enable:
+                type: bool
+                required: false
+                default: true
+                description:
+                  - >-
+                    Route only the declared networks through the tunnel. False
+                    hands the profile back to what the server pushes, and resets
+                    the properties this role set.
+              routes:
+                type: list
+                elements: str
+                required: false
+                default: []
+                description:
+                  - >-
+                    Internal networks in CIDR notation, written to
+                    C(ipv4.routes). IPv4 only.
+                  - >-
+                    One address per entry, written out: nmcli reads neither a
+                    leading dot for the network of the entry above nor shell
+                    style braces for a range of octets. A next hop and a metric
+                    may follow the address.
+              dns:
+                type: list
+                elements: str
+                required: false
+                default: []
+                description:
+                  - >-
+                    Internal resolvers responsible for C(routing_domains),
+                    written to C(ipv4.dns). They have to be reachable from the
+                    networks in C(routes).
+              routing_domains:
+                type: list
+                elements: str
+                required: false
+                default: []
+                description:
+                  - >-
+                    Zones whose resolution goes to those resolvers, written to
+                    C(ipv4.dns-search). A bare entry is a search domain, which
+                    systemd-resolved also routes; prefix it with C(~) for routing
+                    without the search suffix.
+      openvpn_verify:
+        type: bool
+        required: false
+        default: true
+        description:
+          - >-
+            Assert that /etc/resolv.conf is handed to systemd-resolved. Without
+            it the per-link resolvers are set over DBus and read by nobody.

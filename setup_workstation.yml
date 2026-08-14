@@ -64,6 +64,15 @@
       tags:
         - wireguard
 
+    # Same vault caveat as wireguard: the tunnel definitions in host_vars
+    # resolve through Bitwarden, so skip this with --skip-tags openvpn when the
+    # vault is locked.
+    - name: Configure the openvpn split tunnels
+      ansible.builtin.import_role:
+        name: openvpn
+      tags:
+        - openvpn
+
     - name: Install a Neovim distribution
       ansible.builtin.import_role:
         name: vim
