@@ -1,0 +1,54 @@
+---
+# Entry point for roles that need a working copy somewhere the project tree does
+# not reach: a fixed path, a different owner, and a checkout that tracks its
+# remote instead of being left alone.
+#
+# clone.yml stays what it is. It derives the path from the URL so the includeIf
+# identities match, it clones into git_base.dir, and it never touches an existing
+# checkout. Both are needed; neither can be the other.
+#
+# No key of git_checkout may be named after a dict method — items, keys, values,
+# get, copy, pop, clear, setdefault and update are all taken. Jinja falls back to
+# the attribute for both git_checkout.update and git_checkout['update'] (dotted
+# access tries the attribute first, subscript tries it second), so such a key
+# resolves to a bound method instead of the parameter, and `| default()` cannot
+# catch it because a method is very much defined:
+#
+#   Type 'builtin_function_or_method' is unsupported for variable storage
+#
+# That is why the option below is called `pull` and not `update`, even though the
+# module option it feeds is named update.
+
+# This entry point is reached without main.yml having run, so it cannot assume
+# the package is there. Same owner, so this is not a second role installing git.
+- name: Install git
+  community.general.pacman:
+    name: git
+    state: present
+  become: true
+
+- name: Check out {{ git_checkout.repo }}
+  ansible.builtin.git:
+    repo: "{{ git_checkout.repo }}"
+    dest: "{{ git_checkout.dest }}"
+    version: "{{ git_checkout.version | default('HEAD') }}"
+    key_file: "{{ git_checkout.key_file | default(omit) }}"
+    accept_hostkey: "{{ git_checkout.accept_hostkey | default(true) }}"
+    update: "{{ git_checkout.pull | default(true) }}"
+    force: "{{ git_checkout.force | default(false) }}"
+  become: true
+  become_user: "{{ git_checkout.owner | default('root') }}"
+
+# The git module has no mode of its own and creates the tree under the caller's
+# umask, so a repository carrying secrets would land world-readable. Restricting
+# the top directory is what keeps everything below it out of reach — a mode per
+# file would fight the next checkout.
+- name: Restrict the checkout at {{ git_checkout.dest }}
+  ansible.builtin.file:
+    path: "{{ git_checkout.dest }}"
+    state: directory
+    owner: "{{ git_checkout.owner | default('root') }}"
+    group: "{{ git_checkout.group | default(git_checkout.owner | default('root')) }}"
+    mode: "{{ git_checkout.mode }}"
+  become: true
+  when: git_checkout.mode is defined

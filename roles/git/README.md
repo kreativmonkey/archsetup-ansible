@@ -91,6 +91,28 @@ Clone a single repository:
     git_repository: git@github.com:kreativmonkey/dotfiles.git
 ```
 
+Check out a repository somewhere the project tree does not reach — a fixed path,
+a different owner, and a working copy that follows its remote:
+
+```yaml
+- name: Check out the VPN profiles
+  ansible.builtin.include_role:
+    name: git
+    tasks_from: checkout
+  vars:
+    git_checkout:
+      repo: ssh://git@ssh.example.org/group/vpn.git
+      dest: /etc/openvpn/example
+      version: main
+      owner: root
+      mode: "0700"
+      key_file: /home/sebastian/.ssh/id_ed25519
+```
+
+`clone` and `checkout` are not variants of each other. `clone` puts a repository
+where the `includeIf` identities expect it and never touches an existing
+checkout; `checkout` puts it exactly where the caller says and keeps it current.
+
 ## Notes
 
 - **The trailing slash in `includeIf` is load-bearing.** `gitdir:~/git/github.com`
