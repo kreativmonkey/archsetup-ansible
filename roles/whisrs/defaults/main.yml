@@ -5,10 +5,12 @@
 # the typing both need the graphical session.
 whisrs_user: "{{ system_users[0].name }}"
 
-# Transcription language and whisper model size. Bigger is more accurate and
-# slower; "small" is the point where German dictation becomes usable.
+# Transcription language and whisper.cpp model. The role downloads
+# ggml-<model>.bin from Hugging Face and points whisrs at that file. Bigger is
+# more accurate and slower; "small" buys noticeably better German at 488 MB
+# instead of 148 MB. The ".en" variants are English-only.
 whisrs_language: de
-whisrs_model: small
+whisrs_model: base
 
 # Transcription backend. local-whisper keeps the audio on this machine.
 whisrs_backend: local-whisper
@@ -17,5 +19,7 @@ whisrs_backend: local-whisper
 whisrs_notify: true
 
 # Hotkey that toggles dictation. Evaluated by whisrs itself through evdev,
-# which is why the user has to be in the input group.
-whisrs_hotkey: "Super+Ctrl"
+# which is why the user has to be in the input group. whisrs parses the last
+# element as the trigger key, so modifiers alone ("Super+Ctrl") do not work —
+# it has to be modifier(s) plus a key.
+whisrs_hotkey: "Super+Shift+W"

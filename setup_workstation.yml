@@ -115,8 +115,14 @@
       tags:
         - opencode
 
+    - name: Configure whisrs
+      ansible.builtin.import_role:
+        name: whisrs
+      tags:
+        - whisrs
+
 # Roles kept out of this playbook on purpose. Enable one by adding an
 # import_role task above:
-#   conky editor headroom obs_studio sshd tuxedo whisrs
+#   conky editor headroom obs_studio sshd tuxedo
 # The sysctl role has no entry here either: it is a central role that podman
 # and wireguard call through include_role, it is never imported directly.

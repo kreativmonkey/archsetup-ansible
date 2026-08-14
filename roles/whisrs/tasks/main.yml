@@ -35,6 +35,27 @@
   environment:
     PATH: "/home/{{ whisrs_user }}/.cargo/bin:/usr/bin:/bin"
 
+- name: Create the whisper model directory
+  ansible.builtin.file:
+    path: "{{ __whisrs_model_dir }}"
+    state: directory
+    owner: "{{ whisrs_user }}"
+    group: "{{ whisrs_user }}"
+    mode: "0755"
+  become: true
+
+# A ggml file is immutable under its name and half a gigabyte large, so an
+# existing file is the right one — get_url fetches only what is missing.
+- name: Download the whisper model {{ whisrs_model }}
+  ansible.builtin.get_url:
+    url: "{{ __whisrs_model_url }}"
+    dest: "{{ __whisrs_model_path }}"
+    owner: "{{ whisrs_user }}"
+    group: "{{ whisrs_user }}"
+    mode: "0644"
+    timeout: 60
+  become: true
+
 - name: Create the whisrs config directory
   ansible.builtin.file:
     path: "/home/{{ whisrs_user }}/.config/whisrs"
@@ -69,6 +90,11 @@
 
 # ydotool types the transcription back through /dev/uinput, which is
 # root-only by default. The udev role owns the rules and the reload.
+#
+# MODE and GROUP alone are not enough: another rule (brltty, for one) can put an
+# ACL on /dev/uinput, and an ACL beats the traditional group bits. The setfacl
+# call from upstream's own rule restores group access; TEST== keeps the line a
+# no-op where acl is not installed.
 - name: Allow the input group to write to uinput
   ansible.builtin.include_role:
     name: udev
@@ -77,7 +103,8 @@
     udev_rule:
       name: 99-uinput.rules
       content: |
-        KERNEL=="uinput", MODE="0660", GROUP="input"
+        KERNEL=="uinput", SUBSYSTEM=="misc", MODE="0660", GROUP="input", TAG+="uaccess"
+        KERNEL=="uinput", SUBSYSTEM=="misc", TEST=="/usr/bin/setfacl", RUN+="/usr/bin/setfacl -m g:input:rw /dev/$name"
 
 - name: Create the systemd user directory
   ansible.builtin.file:
