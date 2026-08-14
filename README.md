@@ -120,6 +120,7 @@ entry points. Reading is free, writing is not.
 | `git` | the global git configuration | `clone` |
 | `opencode` | `opencode.json` | `add_provider`, `add_mcp_server` |
 | `pacman` | `/etc/pacman.conf` | — |
+| `aur` | the AUR helper, the build account, `/etc/sudoers.d/zz-ansible-aur` | `install` |
 | `firewalld` | `IPv6_rpfilter` in `firewalld.conf` | — |
 | `editor` | `EDITOR`/`VISUAL` in `/etc/environment` | — |
 

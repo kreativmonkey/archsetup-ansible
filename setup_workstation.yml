@@ -25,6 +25,14 @@
       tags:
         - common
 
+    # After common, because the build toolchain comes from the official
+    # repositories, and before every role that asks for an AUR package.
+    - name: Establish AUR access
+      ansible.builtin.import_role:
+        name: aur
+      tags:
+        - aur
+
     - name: Install podman
       ansible.builtin.import_role:
         name: podman

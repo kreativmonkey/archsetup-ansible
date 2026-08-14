@@ -1,0 +1,26 @@
+---
+# Entry point for roles that need a package the official repositories do not
+# carry. The AUR is a shared resource: no other role calls kewlfft.aur.aur
+# directly, so the helper, the build account and the sudo rule have one owner.
+
+# This entry point must not assume main.yml already ran. A caller reached with
+# --tags openvpn skips the aur role's own play task, and without the sudo rule
+# below makepkg fails at the very last step, after a successful build:
+#
+#   sudo: a terminal is required to read the password
+#   -> error installing: [...pkg.tar.zst] - exit status 1
+#
+# The fact makes this a no-op for every call after the first in a play.
+- name: Establish AUR access
+  ansible.builtin.include_tasks: __ensure/access.yml
+  when: __aur_access_ready is not defined
+
+# makepkg refuses to run as root, which is why this drops to an unprivileged
+# account instead of using plain become: true.
+- name: Install from the AUR - {{ aur_package.name }}
+  kewlfft.aur.aur:
+    name: "{{ aur_package.name }}"
+    use: "{{ aur_package.use | default(aur_helper) }}"
+    state: "{{ aur_package.state | default('present') }}"
+  become: true
+  become_user: "{{ aur_package.build_user | default(aur_build_user) }}"

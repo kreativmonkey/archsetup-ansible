@@ -1,0 +1,119 @@
+---
+argument_specs:
+  main:
+    short_description: Establish AUR access and install the host's AUR packages
+    description:
+      - >-
+        Central role for the Arch User Repository. It owns the build
+        prerequisites, the AUR helper and the sudoers drop-in that lets the
+        build account install what it built.
+      - >-
+        No other role calls C(kewlfft.aur.aur) directly. A role that needs an
+        AUR package calls the C(install) entry point instead.
+      - >-
+        Requires the C(kewlfft.aur) collection, which is not bundled with the
+        C(ansible) package. C(just setup) installs it from requirements.yml.
+    options:
+      aur_helper:
+        type: str
+        required: false
+        default: yay
+        choices: [auto, yay, paru, pacaur, trizen, pikaur, aurman, makepkg]
+        description:
+          - >-
+            Helper command every install goes through. The helper itself is
+            always built with makepkg, because a helper cannot install itself.
+      aur_helper_package:
+        type: str
+        required: false
+        description:
+          - >-
+            AUR package that provides C(aur_helper), defaults to its name. Set
+            it to a prebuilt variant such as C(yay-bin) to skip the Go
+            toolchain.
+      aur_build_user:
+        type: str
+        required: false
+        description:
+          - >-
+            Unprivileged account the packages are built as, defaults to the
+            first entry in the inventory C(system_users). makepkg refuses to
+            run as root, so this must not be root.
+      aur_sudoers_dropin:
+        type: bool
+        required: false
+        default: true
+        description:
+          - >-
+            Write a sudoers drop-in granting C(aur_build_user) password-less
+            C(/usr/bin/pacman). Needed because makepkg installs through sudo
+            from a process without a terminal.
+          - >-
+            The rule makes that account root-equivalent without a password.
+            Set it to false to have the role remove its drop-in again and grant
+            the right some other way.
+      aur_packages:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description:
+          - >-
+            Packages this host wants for its own sake, installed in one
+            transaction. Roles do not list their packages here.
+
+  install:
+    short_description: Install one or more packages from the AUR
+    description:
+      - >-
+        Entry point for other roles. Never call C(kewlfft.aur.aur) outside this
+        role — the helper, the build account and the sudo rule belong to it.
+      - >-
+        Establishes AUR access itself when it has not been established in this
+        play yet, so it also works when the C(aur) role's own play task was
+        skipped by a tag selection.
+      - >-
+        Pass a whole list in C(name) rather than calling this once per package:
+        the helper resolves a list in a single transaction.
+    options:
+      aur_package:
+        type: dict
+        required: true
+        description:
+          - The package or packages to install.
+        options:
+          name:
+            type: list
+            elements: str
+            required: true
+            description:
+              - Package names. A bare string is accepted as a one-item list.
+          state:
+            type: str
+            required: false
+            default: present
+            choices: [present, latest, absent]
+            description: Whether the packages should be installed.
+          use:
+            type: str
+            required: false
+            choices: [auto, yay, paru, pacaur, trizen, pikaur, aurman, makepkg]
+            description:
+              - Helper for this call only, defaults to C(aur_helper).
+          build_user:
+            type: str
+            required: false
+            description:
+              - Build account for this call only, defaults to C(aur_build_user).
+      aur_helper:
+        type: str
+        required: false
+        default: yay
+        choices: [auto, yay, paru, pacaur, trizen, pikaur, aurman, makepkg]
+        description:
+          - Helper used when the call sets no C(use).
+      aur_build_user:
+        type: str
+        required: false
+        description:
+          - Build account used when the call sets no C(build_user).

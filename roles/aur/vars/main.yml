@@ -1,0 +1,21 @@
+---
+# vars file for aur
+
+# The sudoers drop-in this role owns.
+#
+# sudo does not pick the most specific rule, it applies the LAST one that
+# matches — and it reads /etc/sudoers.d in alphabetical order. A broad
+# `%wheel ALL=(ALL:ALL) ALL` read after this file therefore puts the password
+# prompt back for pacman as well, silently: `sudo -l` still lists the exception,
+# it just no longer wins.
+#
+# Hence zz-, not the usual 10- or 99-: it has to sort after numeric prefixes and
+# after plain names like `wheel` (0x77 > 0x39, so `wheel` beats `99-`).
+__aur_sudoers_file: /etc/sudoers.d/zz-ansible-aur
+
+# Header for the drop-in, which is written with `copy: content:`.
+#
+# Not `ansible_managed | comment`: that variable is injected into the render
+# context of the template module only. In a task argument it is simply
+# undefined, and the task fails before it runs.
+__aur_managed_header: "# Managed by ansible (roles/aur) — local changes are overwritten."
