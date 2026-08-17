@@ -101,6 +101,12 @@ wireguard_interfaces:
   variable in `defaults/main.yml` — the loop shadowed the default, so the default
   was decoration. The loop variable is the interface *dict* now, and there is no
   default to shadow.
+- **A routing domain must not start with a dot.** `resolvectl domain %i
+  ~.example.org` is rejected as `Domain not valid`, the `PostUp` fails, and
+  `wg-quick` then tears the tunnel down again — a tunnel that dies on a DNS
+  detail. `search_domains` therefore strips leading `~`/`.` and trailing dots
+  before it puts the `~` back on, so `.example.org`, `example.org` and
+  `~example.org` all mean the same thing.
 - **The public key is derived, never stored once.** It is what you hand to the
   peer, so it is recomputed from the private key on every run. Writing it beside
   a key that was later replaced left the two out of sync, and the tunnel then
