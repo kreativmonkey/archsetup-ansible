@@ -23,6 +23,23 @@
   become: true
   when: wireguard_interface.private_key is not defined
 
+# A supplied key comes out of a password manager, so it can be anything: the
+# wrong field, an empty one, a whole config file pasted in. `wg pubkey` would
+# reject it two tasks later with a bare "non-zero return code", censored by
+# no_log — this says what is actually wrong, and it says it before the deploy
+# below overwrites a key that still works. The assertion prints its own source,
+# never the value.
+- name: Check the supplied private key of {{ wireguard_interface.name }}
+  ansible.builtin.assert:
+    that:
+      - wireguard_interface.private_key | trim is match('[A-Za-z0-9+/]{43}=$')
+    fail_msg: >-
+      private_key of {{ wireguard_interface.name }} is not a WireGuard key.
+      Expected the 44 base64 characters that `wg genkey` prints; check the field
+      the interface definition reads it from.
+    quiet: true
+  when: wireguard_interface.private_key is defined
+
 # A tunnel whose peer was set up elsewhere brings its own key: only that one
 # matches the public key the peer already knows, so a generated one would never
 # complete a handshake.
