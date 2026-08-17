@@ -42,10 +42,14 @@ git_repositories: []
 # the target network lands in this public repository. The item needs these
 # custom fields:
 #
-#   Address  DNS  SearchDomain  PublicKey  PresharedKey  AllowedIPs  Endpoint
+#   PrivateKey  Address  DNS  SearchDomain  PublicKey  PresharedKey  AllowedIPs
+#   Endpoint
+#
+# PrivateKey is a custom field like the rest, not the item's password: this peer
+# was issued by the lab, so the key has to be the one the lab already knows.
 wireguard_interfaces:
   - name: pudelab
-    private_key: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='password') | first }}"
+    private_key: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='PrivateKey') | first }}"
     address: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='Address') | first }}"
     dns: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='DNS') | first }}"
     search_domains:

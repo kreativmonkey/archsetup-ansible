@@ -54,7 +54,7 @@ wireguard_interfaces:
   - name: mylab
     # Only when the peer already knows this host's public key. Leave it out and
     # the role generates a pair, whose public key you then hand to the peer.
-    private_key: "{{ lookup('community.general.bitwarden', 'WireGuard mylab', field='password') | first }}"
+    private_key: "{{ lookup('community.general.bitwarden', 'WireGuard mylab', field='PrivateKey') | first }}"
     address: "{{ lookup('community.general.bitwarden', 'WireGuard mylab', field='Address') | first }}"
     dns: "{{ lookup('community.general.bitwarden', 'WireGuard mylab', field='DNS') | first }}"
     search_domains:
