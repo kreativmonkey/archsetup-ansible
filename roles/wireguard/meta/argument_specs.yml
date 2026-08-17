@@ -26,6 +26,16 @@ argument_specs:
               - >-
                 Interface name. Decides the config file name and the wg-quick
                 unit, e.g. C(wg0) for /etc/wireguard/wg0.conf.
+          private_key:
+            type: str
+            required: false
+            description:
+              - >-
+                Private key of this host inside the tunnel. Set it when the peer
+                was set up elsewhere and already knows the matching public key —
+                a generated key would never complete a handshake. Left out, the
+                role generates a key pair once and keeps it.
+              - Belongs in a lookup, never as a literal in the inventory.
           address:
             type: str
             required: true

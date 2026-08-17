@@ -45,6 +45,7 @@ git_repositories: []
 #   Address  DNS  SearchDomain  PublicKey  PresharedKey  AllowedIPs  Endpoint
 wireguard_interfaces:
   - name: pudelab
+    private_key: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='password') | first }}"
     address: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='Address') | first }}"
     dns: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='DNS') | first }}"
     search_domains:

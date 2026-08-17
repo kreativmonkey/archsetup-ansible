@@ -11,32 +11,39 @@
     mode: "0700"
   become: true
 
-# `wg genkey` has no state-aware module, so this needs both `creates` and
-# pipefail: without pipefail the shell reports the exit status of `wg pubkey`
-# and a failing genkey passes silently.
-- name: Generate the key pair for {{ wireguard_interface.name }}
+# `wg genkey` has no state-aware module, so this needs `creates`: the key is
+# generated once and then kept, because regenerating it would lock this host out
+# of every peer that has the old public key. The key goes straight to disk and
+# never through an Ansible variable.
+- name: Generate the private key of {{ wireguard_interface.name }}
   ansible.builtin.shell:
-    cmd: >-
-      set -o pipefail &&
-      wg genkey
-      | tee {{ __wireguard_private_key_file }}
-      | wg pubkey > {{ __wireguard_public_key_file }}
+    cmd: wg genkey > {{ __wireguard_private_key_file }}
     creates: "{{ __wireguard_private_key_file }}"
     executable: /bin/bash
   become: true
+  when: wireguard_interface.private_key is not defined
 
-- name: Restrict the key pair of {{ wireguard_interface.name }}
-  ansible.builtin.file:
-    path: "{{ __wireguard_key_file }}"
+# A tunnel whose peer was set up elsewhere brings its own key: only that one
+# matches the public key the peer already knows, so a generated one would never
+# complete a handshake.
+- name: Deploy the private key of {{ wireguard_interface.name }}
+  ansible.builtin.copy:
+    content: "{{ wireguard_interface.private_key | trim }}\n"
+    dest: "{{ __wireguard_private_key_file }}"
     owner: root
     group: root
     mode: "0600"
   become: true
-  loop_control:
-    loop_var: __wireguard_key_file
-  loop:
-    - "{{ __wireguard_private_key_file }}"
-    - "{{ __wireguard_public_key_file }}"
+  no_log: true
+  when: wireguard_interface.private_key is defined
+
+- name: Restrict the private key of {{ wireguard_interface.name }}
+  ansible.builtin.file:
+    path: "{{ __wireguard_private_key_file }}"
+    owner: root
+    group: root
+    mode: "0600"
+  become: true
 
 - name: Read the private key of {{ wireguard_interface.name }}
   ansible.builtin.slurp:
@@ -44,6 +51,26 @@
   become: true
   register: __wireguard_private_key_content
   no_log: true
+
+# Derived from the private key on every run rather than written once beside it:
+# a public key that outlives the key it belongs to is worse than none, because
+# it is the one you hand to the peer.
+- name: Derive the public key of {{ wireguard_interface.name }}
+  ansible.builtin.command:
+    cmd: wg pubkey
+    stdin: "{{ __wireguard_private_key_content.content | b64decode | trim }}"
+  register: __wireguard_public_key
+  changed_when: false
+  no_log: true
+
+- name: Write the public key of {{ wireguard_interface.name }}
+  ansible.builtin.copy:
+    content: "{{ __wireguard_public_key.stdout | trim }}\n"
+    dest: "{{ __wireguard_public_key_file }}"
+    owner: root
+    group: root
+    mode: "0600"
+  become: true
 
 - name: Write the configuration for {{ wireguard_interface.name }}
   ansible.builtin.template:

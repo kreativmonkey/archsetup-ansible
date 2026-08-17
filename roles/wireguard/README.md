@@ -14,7 +14,7 @@ repository.
 | Area | How |
 |------|-----|
 | **Packages** | `wireguard-tools`. |
-| **Keys** | `wg genkey` per interface into `/etc/wireguard/privatekey-<name>`, `0600`, generated once. |
+| **Keys** | `wg genkey` per interface into `/etc/wireguard/privatekey-<name>`, `0600`, generated once — or the `private_key` from the interface definition, when the peer already knows the matching public key. |
 | **Config** | `/etc/wireguard/<name>.conf`, `0600`, from `templates/interface.conf.j2`. |
 | **Forwarding** | `net.ipv4.ip_forward` through the `sysctl` role, only with `wireguard_forward_ipv4`. |
 
@@ -52,6 +52,9 @@ In the inventory, with every identifying value out of a password manager:
 ```yaml
 wireguard_interfaces:
   - name: mylab
+    # Only when the peer already knows this host's public key. Leave it out and
+    # the role generates a pair, whose public key you then hand to the peer.
+    private_key: "{{ lookup('community.general.bitwarden', 'WireGuard mylab', field='password') | first }}"
     address: "{{ lookup('community.general.bitwarden', 'WireGuard mylab', field='Address') | first }}"
     dns: "{{ lookup('community.general.bitwarden', 'WireGuard mylab', field='DNS') | first }}"
     search_domains:
@@ -98,11 +101,15 @@ wireguard_interfaces:
   variable in `defaults/main.yml` — the loop shadowed the default, so the default
   was decoration. The loop variable is the interface *dict* now, and there is no
   default to shadow.
-- **`wg genkey | tee | wg pubkey` needs `pipefail`.** Without it the shell
-  reports the exit status of the last command in the pipe, so a failing `genkey`
-  passes silently and leaves an empty private key behind.
-- **The private key never reaches a log.** The slurp and the template task are
-  `no_log: true`.
+- **The public key is derived, never stored once.** It is what you hand to the
+  peer, so it is recomputed from the private key on every run. Writing it beside
+  a key that was later replaced left the two out of sync, and the tunnel then
+  fails the only way WireGuard knows: silently, with no handshake.
+- **The private key never reaches a log.** The generated one goes straight to
+  disk; a supplied one, the slurp and the template task are `no_log: true`.
 - **Keys are generated once.** `creates:` on the shell task means an existing key
   pair is never regenerated — regenerating would silently lock this host out of
   every peer that has the old public key.
+- **A supplied `private_key` wins.** A peer that was set up elsewhere already
+  knows one public key; only the matching private key completes a handshake, so
+  the generation step is skipped entirely for such an interface.
