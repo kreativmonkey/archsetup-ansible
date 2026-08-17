@@ -8,23 +8,30 @@ ListenPort = {{ wireguard_interface.listen_port }}
 {% if wireguard_interface.mtu is defined %}
 MTU = {{ wireguard_interface.mtu }}
 {% endif %}
-{% if wireguard_interface.dns is defined %}
-DNS = {{ wireguard_interface.dns }}
-{% endif %}
 {#
-  DNS = above tells wg-quick which resolver to use. It does not make
-  systemd-resolved route a domain to it, so a split-DNS zone needs the routing
-  domain set explicitly — that is what the ~ prefix does.
-
   resolvectl rejects a domain that starts with a dot, and a search domain is
   just as often written `.example.org` as `example.org`. Both spellings, and an
   already prefixed `~example.org`, have to end up as the same routing domain —
-  a rejected one fails the PostUp and wg-quick then tears the whole tunnel down
-  again.
+  a rejected one fails the PostUp, and wg-quick then tears the whole tunnel
+  down again.
 #}
 {% set routing_domains = wireguard_interface.search_domains | default([])
      | map('trim') | map('regex_replace', '^[~.]+', '')
      | map('regex_replace', '[.]+$', '') | select | list %}
+{#
+  A split tunnel writes no `DNS =`: that line makes wg-quick call
+  `resolvconf -x`, and the systemd-resolved shim reads the exclusive flag as
+  the routing domain `~.` — every DNS query of the whole system into this
+  tunnel, until the PostUp below narrows it down again. Resolver and routing
+  domain are set together through resolvectl instead, so the split is never
+  briefly not a split.
+
+  Without search_domains there is nothing to split: `DNS =` then means what it
+  says, this tunnel resolves everything.
+#}
+{% if wireguard_interface.dns is defined and routing_domains | length == 0 %}
+DNS = {{ wireguard_interface.dns }}
+{% endif %}
 {% if routing_domains | length > 0 %}
 PostUp = resolvectl dns %i {{ wireguard_interface.dns }}; resolvectl domain %i {{ routing_domains | map('regex_replace', '^', '~') | join(' ') }}
 PostDown = resolvectl revert %i

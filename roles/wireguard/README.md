@@ -87,11 +87,17 @@ wireguard_interfaces:
 
 ## Notes
 
-- **`DNS =` alone does not give you split DNS.** It tells `wg-quick` which
-  resolver to use; it does not make systemd-resolved *route* a zone to it. That
-  needs a routing domain, which is what the `~` prefix in
-  `resolvectl domain %i ~example.org` does. `search_domains` generates that
-  `PostUp`/`PostDown` pair and adds the `~` when you leave it off.
+- **`DNS =` is worse than useless for a split tunnel.** It tells `wg-quick`
+  which resolver to use, but it does not make systemd-resolved *route* a zone to
+  it — and on the way there `wg-quick` calls `resolvconf -x`, which the
+  systemd-resolved shim reads as the routing domain `~.`: every DNS query of the
+  whole system into the tunnel. With `search_domains` set, the config therefore
+  carries no `DNS =` at all. Resolver and routing domain are set together, in
+  one `PostUp`, through `resolvectl` — so the split is never briefly not a
+  split. Without `search_domains`, `DNS =` stays and means what it says.
+- **A routing domain is a `~` prefix.** `resolvectl domain %i ~example.org` is
+  what makes systemd-resolved send that zone, and only that zone, to the
+  tunnel's resolver. `search_domains` adds the `~` when you leave it off.
 - **The templates used to be named after the tunnels.** There was a
   `pudelab.conf.j2` and a `wg0.conf.j2`, each with the addresses and the DNS
   server of one specific network written into it, in a public repository. There
