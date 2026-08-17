@@ -33,6 +33,12 @@
       tags:
         - aur
 
+    - name: Install the fonts
+      ansible.builtin.import_role:
+        name: fonts
+      tags:
+        - fonts
+
     - name: Install podman
       ansible.builtin.import_role:
         name: podman

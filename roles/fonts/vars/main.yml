@@ -1,0 +1,13 @@
+---
+# vars file for fonts
+
+# The corporate typeface. Internal on purpose: which font the company uses is
+# not a per-host choice — it is what https://www.puzzle.ch/brand specifies.
+#
+# ttf-roboto carries the regular family *and* Roboto Condensed. Roboto Slab is
+# the one variant the brand page mentions that Arch does not package; it only
+# exists as a zip behind the brand page and is left out rather than pulled from
+# an unversioned upload path.
+__fonts_corporate_packages:
+  - ttf-roboto
+  - ttf-roboto-mono

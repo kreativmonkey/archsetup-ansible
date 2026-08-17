@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
+{{ ansible_managed | comment('xml') }}
+<fontconfig>
+  <!--
+    match/prepend/binding="strong", not <alias><prefer>.
+
+    51-local.conf pulls this file in before 60-latin.conf, and that file
+    carries its own alias for monospace — a prefer here loses against it and
+    the generic silently keeps resolving to Noto Sans Mono. A strong prepend
+    wins. Checked with:
+      fc-match monospace
+  -->
+  <match target="pattern">
+    <test qual="any" name="family">
+      <string>sans-serif</string>
+    </test>
+    <edit name="family" mode="prepend" binding="strong">
+      <string>{{ fonts_default_sans }}</string>
+    </edit>
+  </match>
+
+  <match target="pattern">
+    <test qual="any" name="family">
+      <string>monospace</string>
+    </test>
+    <edit name="family" mode="prepend" binding="strong">
+      <string>{{ fonts_default_monospace }}</string>
+    </edit>
+  </match>
+{% if fonts_symbol_fallback | length > 0 %}
+
+  <!--
+    Appended, not prepended: the icon font only has to catch the glyphs the
+    monospace family itself lacks. Without it the glyph goes to whichever nerd
+    font fontconfig happens to rank first. Checked with:
+      fc-match 'monospace:charset=f09b'
+  -->
+  <match target="pattern">
+    <test qual="any" name="family">
+      <string>monospace</string>
+    </test>
+    <edit name="family" mode="append" binding="strong">
+      <string>{{ fonts_symbol_fallback }}</string>
+    </edit>
+  </match>
+{% endif %}
+</fontconfig>

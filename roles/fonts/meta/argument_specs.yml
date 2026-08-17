@@ -1,0 +1,55 @@
+---
+argument_specs:
+  main:
+    short_description: Install the corporate and terminal fonts and set the system defaults
+    description:
+      - >-
+        Installs the corporate typeface the brand guide specifies (Roboto) and
+        the patched nerd fonts a terminal needs, then writes
+        C(/etc/fonts/local.conf) so applications actually pick them.
+    options:
+      fonts_nerd_packages:
+        type: list
+        elements: str
+        required: false
+        default:
+          - ttf-jetbrains-mono-nerd
+          - otf-monaspace-nerd
+          - ttf-nerd-fonts-symbols-mono
+        description:
+          - >-
+            Patched terminal fonts to install. Must exist in the official
+            repositories. An empty list skips the installation.
+      fonts_defaults:
+        type: bool
+        required: false
+        default: true
+        description:
+          - >-
+            Write C(/etc/fonts/local.conf). Without it the fonts are merely
+            present and fontconfig keeps its own ranking.
+      fonts_default_sans:
+        type: str
+        required: false
+        default: Roboto
+        description:
+          - >-
+            Family preferred for C(sans-serif), as fontconfig names it
+            (C(fc-list : family)), not as pacman names the package.
+      fonts_default_monospace:
+        type: str
+        required: false
+        default: JetBrainsMono Nerd Font Mono
+        description:
+          - >-
+            Family preferred for C(monospace). The C(Mono) suffix of a nerd
+            font is the strictly monospaced cut, which is the one a terminal
+            wants.
+      fonts_symbol_fallback:
+        type: str
+        required: false
+        default: Symbols Nerd Font Mono
+        description:
+          - >-
+            Family appended after the monospace one so missing glyphs still
+            resolve to a nerd font icon. An empty string leaves it out.

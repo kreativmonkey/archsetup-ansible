@@ -45,8 +45,6 @@ __common_packages:
   - xournalpp
   - nextcloud-client
   - libreoffice-fresh
-  # fonts
-  - ttf-roboto
   # spell checking
   - hunspell
   - hunspell-de

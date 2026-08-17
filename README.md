@@ -58,6 +58,7 @@ roles/                    one role per owned piece of state
 | `pacman` | `/etc/pacman.conf` — output flags, parallel downloads, repositories |
 | `common` | the base package set every host gets |
 | `aur` | AUR access: helper, build account and its sudoers drop-in |
+| `fonts` | the corporate typeface, the nerd fonts, and `/etc/fonts/local.conf` |
 | `podman` | rootless containers, optionally as the docker replacement |
 | `udev` | `/etc/udev/rules.d` and the reload |
 | `firewalld` | firewalld with the nftables backend, `IPv6_rpfilter` |

@@ -1,0 +1,31 @@
+---
+# tasks file for fonts
+
+# One transaction per set, not one per package: pacman resolves the whole set
+# at once, and its fontconfig hook rebuilds the font cache afterwards — which
+# is why this role has no fc-cache task of its own.
+- name: Install the corporate fonts
+  community.general.pacman:
+    name: "{{ __fonts_corporate_packages }}"
+    state: present
+  become: true
+
+- name: Install the nerd fonts
+  community.general.pacman:
+    name: "{{ fonts_nerd_packages }}"
+    state: present
+  become: true
+  when: fonts_nerd_packages | length > 0
+
+# /etc/fonts/local.conf is the file fontconfig reserves for the local system,
+# no package ships one — so this role can own it outright instead of editing
+# around someone else's content.
+- name: Set the system-wide font defaults
+  ansible.builtin.template:
+    src: local.conf.j2
+    dest: /etc/fonts/local.conf
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  when: fonts_defaults

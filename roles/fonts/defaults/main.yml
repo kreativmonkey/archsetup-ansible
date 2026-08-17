@@ -1,0 +1,23 @@
+---
+# defaults file for fonts
+
+# Patched terminal fonts. All of these live in the official repositories as
+# ttf-*-nerd / otf-*-nerd, so no AUR detour is needed.
+fonts_nerd_packages:
+  - ttf-jetbrains-mono-nerd
+  - otf-monaspace-nerd
+  - ttf-nerd-fonts-symbols-mono
+
+# Write /etc/fonts/local.conf. Without it the fonts are merely present and
+# every application keeps picking whatever fontconfig ranked first.
+fonts_defaults: true
+
+# Family names as fontconfig knows them (`fc-list : family`), not package
+# names. The "Mono" suffix of a nerd font is the strictly monospaced cut — the
+# one a terminal wants.
+fonts_default_sans: Roboto
+fonts_default_monospace: JetBrainsMono Nerd Font Mono
+
+# Appended after the monospace family so any glyph it lacks still resolves to a
+# nerd font icon. Set to an empty string to leave the fallback out.
+fonts_symbol_fallback: Symbols Nerd Font Mono
