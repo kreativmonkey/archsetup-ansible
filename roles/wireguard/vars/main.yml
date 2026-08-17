@@ -7,3 +7,6 @@ __wireguard_private_key_file: >-
   {{ wireguard_config_dir }}/privatekey-{{ wireguard_interface.name }}
 __wireguard_public_key_file: >-
   {{ wireguard_config_dir }}/publickey-{{ wireguard_interface.name }}
+
+# The wg-quick instance of the interface currently being configured.
+__wireguard_unit: "wg-quick@{{ wireguard_interface.name }}"

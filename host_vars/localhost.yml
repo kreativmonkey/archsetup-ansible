@@ -49,6 +49,7 @@ git_repositories: []
 # was issued by the lab, so the key has to be the one the lab already knows.
 wireguard_interfaces:
   - name: pudelab
+    enabled: true
     private_key: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='PrivateKey') | first }}"
     address: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='Address') | first }}"
     dns: "{{ lookup('community.general.bitwarden', 'WireGuard pudelab', field='DNS') | first }}"

@@ -26,6 +26,17 @@ argument_specs:
               - >-
                 Interface name. Decides the config file name and the wg-quick
                 unit, e.g. C(wg0) for /etc/wireguard/wg0.conf.
+          enabled:
+            type: bool
+            required: false
+            default: false
+            description:
+              - >-
+                Hand the tunnel to systemd: enable C(wg-quick@<name>) and start
+                it, and restart it whenever the generated config changed.
+              - >-
+                Left out, the role writes the config and touches no unit at all
+                — bringing the tunnel up stays a decision per boot.
           private_key:
             type: str
             required: false

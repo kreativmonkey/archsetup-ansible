@@ -16,10 +16,23 @@ repository.
 | **Packages** | `wireguard-tools`. |
 | **Keys** | `wg genkey` per interface into `/etc/wireguard/privatekey-<name>`, `0600`, generated once — or the `private_key` from the interface definition, when the peer already knows the matching public key. |
 | **Config** | `/etc/wireguard/<name>.conf`, `0600`, from `templates/interface.conf.j2`. |
+| **Unit** | `wg-quick@<name>` enabled and started, restarted on a config change — only with `enabled: true`. |
 | **Forwarding** | `net.ipv4.ip_forward` through the `sysctl` role, only with `wireguard_forward_ipv4`. |
 
-It does **not** start or enable `wg-quick@<name>`. Bringing a tunnel up is a
-decision per boot, not per config run — `systemctl enable --now wg-quick@wg0`.
+An interface with `enabled: true` is handed to systemd: `wg-quick@<name>` is
+enabled and started, and restarted when the generated config changed — the
+config carries the private key and the peers, so a change there means the
+running tunnel is stale. Without a change nothing is restarted, because an
+unconditional restart would drop every connection through the tunnel on every
+run.
+
+Without `enabled`, the role touches no unit at all. Bringing a tunnel up is then
+a decision per boot — `systemctl enable --now wg-quick@wg0`.
+
+An interface that is up while its unit is not — one started by hand — is taken
+down first. systemd runs no `ExecStop` for an inactive or failed unit, so a
+restart would go straight to `wg-quick up` and die with ``wg-quick: `wg0' already
+exists``.
 
 ## The vault has to be unlocked
 
@@ -52,6 +65,7 @@ In the inventory, with every identifying value out of a password manager:
 ```yaml
 wireguard_interfaces:
   - name: mylab
+    enabled: true
     # Only when the peer already knows this host's public key. Leave it out and
     # the role generates a pair, whose public key you then hand to the peer.
     private_key: "{{ lookup('community.general.bitwarden', 'WireGuard mylab', field='PrivateKey') | first }}"

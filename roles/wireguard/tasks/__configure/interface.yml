@@ -97,7 +97,50 @@
     group: root
     mode: "0600"
   become: true
+  register: __wireguard_config
   no_log: true
   vars:
     __wireguard_private_key: >-
       {{ __wireguard_private_key_content.content | b64decode | trim }}
+
+# Handing the tunnel to systemd is opt-in per interface: without `enabled` the
+# role writes the config and stops there, and bringing the tunnel up stays a
+# decision per boot.
+- name: Let systemd own {{ wireguard_interface.name }}
+  when: wireguard_interface.enabled | default(false)
+  become: true
+  block:
+    - name: Look for an existing interface named {{ wireguard_interface.name }}
+      ansible.builtin.command:
+        cmd: ip link show {{ wireguard_interface.name }}
+      register: __wireguard_link
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Read the unit state of {{ wireguard_interface.name }}
+      ansible.builtin.systemd_service:
+        name: "{{ __wireguard_unit }}"
+      register: __wireguard_unit_state
+      check_mode: false
+
+    # An interface that is up while its unit is not is one somebody started by
+    # hand — which is what this role told you to do until `enabled` existed.
+    # systemd runs no ExecStop for a unit that is inactive or failed, so a
+    # restart would go straight to `wg-quick up` and die on "already exists".
+    - name: Release the hand-started interface {{ wireguard_interface.name }}
+      ansible.builtin.command:
+        cmd: wg-quick down {{ wireguard_interface.name }}
+      changed_when: true
+      when:
+        - __wireguard_link.rc == 0
+        - __wireguard_unit_state.status.ActiveState != 'active'
+
+    # Restarted only on a config change: the config carries the private key and
+    # the peers, so a change there means the running tunnel is stale — and an
+    # unconditional restart would drop every connection through it on every run.
+    - name: Enable and start {{ wireguard_interface.name }}
+      ansible.builtin.systemd_service:
+        name: "{{ __wireguard_unit }}"
+        enabled: true
+        state: "{{ 'restarted' if __wireguard_config is changed else 'started' }}"
