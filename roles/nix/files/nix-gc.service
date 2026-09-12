@@ -1,0 +1,10 @@
+[Unit]
+Description=Collect unreachable Nix store paths
+After=nix-daemon.service
+Requires=nix-daemon.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/nix store gc
+Nice=19
+IOSchedulingClass=idle

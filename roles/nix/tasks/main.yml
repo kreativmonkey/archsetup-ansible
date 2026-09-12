@@ -14,6 +14,29 @@
     enabled: true
   become: true
 
+- name: Install the nix garbage collection units
+  ansible.builtin.copy:
+    src: "{{ __nix_gc_unit }}"
+    dest: "/etc/systemd/system/{{ __nix_gc_unit }}"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+  loop_control:
+    loop_var: __nix_gc_unit
+  loop: "{{ __nix_gc_units }}"
+
+- name: Make systemd read the nix garbage collection units
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable the nix garbage collection timer
+  ansible.builtin.systemd_service:
+    name: nix-gc.timer
+    state: started
+    enabled: true
+  become: true
+
 - name: Allow the configured users to use the nix daemon
   ansible.builtin.include_role:
     name: system_user

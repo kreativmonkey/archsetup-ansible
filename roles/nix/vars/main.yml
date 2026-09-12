@@ -1,0 +1,7 @@
+---
+# vars file for nix
+
+# Unit files owned by this role.
+__nix_gc_units:
+  - nix-gc.service
+  - nix-gc.timer

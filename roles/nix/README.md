@@ -1,7 +1,8 @@
 # nix
 
 Installs the nix package manager, starts `nix-daemon`, puts the configured users
-into the `nix-users` group and sets `max-jobs`.
+into the `nix-users` group, sets `max-jobs` and enables a weekly garbage
+collection timer for unreachable store paths.
 
 This is what makes the `nix develop` dev shells of every project on this host
 work.
@@ -27,3 +28,5 @@ work.
   leaves most of the machine idle during a build.
 - **The `nix-users` membership goes through `system_user`**, the role that owns
   groups.
+- **`nix-gc.timer` only runs `nix store gc`**. It removes unreachable store paths
+  but keeps profile generations available for rollback.
