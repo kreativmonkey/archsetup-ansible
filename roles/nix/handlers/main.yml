@@ -5,3 +5,9 @@
   ansible.builtin.systemd_service:
     daemon_reload: true
   become: true
+
+- name: Restart nix daemon
+  ansible.builtin.systemd_service:
+    name: nix-daemon
+    state: restarted
+  become: true

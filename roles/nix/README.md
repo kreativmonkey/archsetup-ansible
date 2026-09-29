@@ -1,7 +1,8 @@
 # nix
 
 Installs the nix package manager, starts `nix-daemon`, puts the configured users
-into the `nix-users` group, sets `max-jobs` and enables a weekly garbage
+into the `nix-users` group, sets `max-jobs`, adds extra binary caches (by default
+`cache.numtide.com`) and enables a weekly garbage
 collection timer for unreachable store paths.
 
 This is what makes the `nix develop` dev shells of every project on this host
@@ -30,3 +31,7 @@ work.
   groups.
 - **`nix-gc.timer` only runs `nix store gc`**. It removes unreachable store paths
   but keeps profile generations available for rollback.
+- **Extra caches are configured system-wide**, not by making users
+  `trusted-users`. A trusted user can add arbitrary substituters and keys, which
+  amounts to root on the host. The `extra-*` directives add to the defaults
+  instead of replacing `cache.nixos.org`.

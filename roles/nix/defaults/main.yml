@@ -8,3 +8,13 @@ nix_users:
 # Parallel build jobs. "auto" is one job per core; the nix default of 1 leaves
 # most of the machine idle during a build.
 nix_max_jobs: auto
+
+# Binary caches added on top of cache.nixos.org, system-wide. Every user of the
+# daemon can pull from them without being a trusted user.
+nix_extra_substituters:
+  - https://cache.numtide.com
+
+# Signing keys for nix_extra_substituters. A substituter without its key is
+# ignored, so both lists belong together.
+nix_extra_trusted_public_keys:
+  - niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=

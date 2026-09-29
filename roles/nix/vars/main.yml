@@ -5,3 +5,10 @@
 __nix_gc_units:
   - nix-gc.service
   - nix-gc.timer
+
+# nix.conf directives holding the extra binary caches.
+__nix_cache_settings:
+  - key: extra-substituters
+    value: "{{ nix_extra_substituters }}"
+  - key: extra-trusted-public-keys
+    value: "{{ nix_extra_trusted_public_keys }}"

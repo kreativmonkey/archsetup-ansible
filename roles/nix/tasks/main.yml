@@ -64,3 +64,23 @@
     group: root
     mode: "0644"
   become: true
+  notify: Restart nix daemon
+
+# Configured system-wide instead of making users trusted: a trusted user can
+# add any substituter and key, which is root on the host.
+- name: Set the extra binary caches
+  ansible.builtin.lineinfile:
+    path: /etc/nix/nix.conf
+    regexp: '^\s*{{ __nix_cache_setting.key }}\s*='
+    line: "{{ __nix_cache_setting.key }} = {{ __nix_cache_setting.value | join(' ') }}"
+    insertafter: EOF
+    state: "{{ (__nix_cache_setting.value | length > 0) | ternary('present', 'absent') }}"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Restart nix daemon
+  loop_control:
+    loop_var: __nix_cache_setting
+    label: "{{ __nix_cache_setting.key }}"
+  loop: "{{ __nix_cache_settings }}"

@@ -21,3 +21,24 @@ argument_specs:
           - >-
             Value of C(max-jobs) in /etc/nix/nix.conf. C(auto) is one job per
             core.
+      nix_extra_substituters:
+        type: list
+        elements: str
+        required: false
+        default:
+          - https://cache.numtide.com
+        description:
+          - >-
+            Value of C(extra-substituters) in /etc/nix/nix.conf. An empty list
+            removes the directive.
+      nix_extra_trusted_public_keys:
+        type: list
+        elements: str
+        required: false
+        default:
+          - niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=
+        description:
+          - >-
+            Value of C(extra-trusted-public-keys) in /etc/nix/nix.conf, the
+            signing keys of O(nix_extra_substituters). An empty list removes
+            the directive.
