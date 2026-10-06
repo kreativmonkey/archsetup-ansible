@@ -16,6 +16,11 @@ opencode_mcp_extra: {}
 opencode_permissions:
   bash: allow
   edit: allow
+  # Outside the project only what the shared agent setup needs: the global
+  # memory in ~/.agents and scratch files in /tmp.
+  external_directory:
+    "~/.agents/memory/*": allow
+    "/tmp/*": allow
   webfetch: allow
 
 opencode_plugins: []
