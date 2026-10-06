@@ -1,0 +1,21 @@
+{{ ansible_managed | comment }}
+[Unit]
+Description=llama.cpp server ({{ llama_server_model.alias }})
+Documentation=https://github.com/ggml-org/llama.cpp/tree/master/tools/server
+After=network.target
+
+[Service]
+Type=exec
+ExecStart={{ __llama_server_link }}/llama-server \
+  --model {{ __llama_server_model_path }} \
+{% if __llama_server_mmproj_path %}
+  --mmproj {{ __llama_server_mmproj_path }} \
+{% endif %}
+  --alias {{ llama_server_model.alias }} \
+  --host {{ llama_server_host }} --port {{ llama_server_port }} \
+  {{ llama_server_args | join(' \\\n  ') }}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

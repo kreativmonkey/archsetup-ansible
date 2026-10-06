@@ -1,0 +1,84 @@
+---
+argument_specs:
+  main:
+    short_description: Run a local LLM with llama.cpp's llama-server on Vulkan
+    description:
+      - >-
+        Installs the Mesa Vulkan driver and a pinned llama.cpp release, downloads
+        a GGUF model from Hugging Face and runs llama-server as a systemd user
+        service with an OpenAI-compatible API.
+      - >-
+        Registers the endpoint with opencode and, once, removes a previous
+        ollama setup.
+    options:
+      llama_server_user:
+        type: str
+        required: false
+        description:
+          - User the server is installed and run for.
+      llama_server_release:
+        type: str
+        required: false
+        default: b11435
+        description:
+          - >-
+            llama.cpp release tag. Flags change between builds, so bump it
+            together with C(llama_server_args).
+      llama_server_vulkan_driver:
+        type: str
+        required: false
+        default: vulkan-radeon
+        description:
+          - Mesa Vulkan driver package, for example C(vulkan-radeon) or C(vulkan-intel).
+      llama_server_model:
+        type: dict
+        required: false
+        description:
+          - GGUF model to download and serve.
+        options:
+          repo:
+            type: str
+            required: true
+            description: Hugging Face repository, C(owner/name).
+          file:
+            type: str
+            required: true
+            description: GGUF file inside the repository.
+          mmproj:
+            type: str
+            required: false
+            description: Vision projector file inside the repository. Empty or absent for none.
+          alias:
+            type: str
+            required: true
+            description: Model name the API and opencode use.
+      llama_server_host:
+        type: str
+        required: false
+        default: 127.0.0.1
+        description:
+          - Listen address. The API has no authentication.
+      llama_server_port:
+        type: int
+        required: false
+        default: 8080
+        description:
+          - Listen port.
+      llama_server_args:
+        type: list
+        elements: str
+        required: false
+        description:
+          - Further llama-server arguments, one flag with its value per entry.
+      llama_server_configure_opencode:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Register the endpoint as a provider in opencode.json.
+      llama_server_remove_ollama:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Stop and uninstall ollama and delete its models and configuration.

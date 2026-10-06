@@ -1,7 +1,7 @@
 ---
 argument_specs:
   main:
-    short_description: Configure opencode against the local ollama models
+    short_description: Configure opencode against the local llama-server model
     description:
       - >-
         Installs the language servers opencode drives and renders

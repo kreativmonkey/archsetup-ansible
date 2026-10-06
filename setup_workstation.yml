@@ -109,11 +109,12 @@
       tags:
         - gnome_keyring
 
-    - name: Install ollama
+    # Before opencode: it registers its endpoint as an opencode provider.
+    - name: Run the local LLM server
       ansible.builtin.import_role:
-        name: ollama
+        name: llama_server
       tags:
-        - ollama
+        - llama_server
 
     - name: Configure opencode
       ansible.builtin.import_role:

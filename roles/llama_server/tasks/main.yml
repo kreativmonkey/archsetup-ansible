@@ -1,0 +1,108 @@
+---
+# tasks file for llama_server
+
+- name: Remove the previous ollama setup
+  ansible.builtin.include_tasks: __migrate/ollama.yml
+  when: llama_server_remove_ollama
+
+# Without a Mesa Vulkan driver llama.cpp finds no GPU and quietly runs on the
+# CPU, which looks like "the model is just slow".
+- name: Install the Vulkan driver
+  community.general.pacman:
+    name:
+      - "{{ llama_server_vulkan_driver }}"
+      - vulkan-icd-loader
+    state: present
+  become: true
+
+- name: Create the install and model directories
+  ansible.builtin.file:
+    path: "{{ __llama_server_directory }}"
+    state: directory
+    owner: "{{ llama_server_user }}"
+    group: "{{ llama_server_user }}"
+    mode: "0755"
+  become: true
+  loop_control:
+    loop_var: __llama_server_directory
+  loop:
+    - "{{ __llama_server_opt_dir }}"
+    - "{{ __llama_server_model_dir }}"
+    - "{{ __llama_server_unit_dir }}"
+
+# The upstream ubuntu-vulkan build runs as is on Arch; the AUR packages are
+# orphaned or lag behind. The archive unpacks into llama-<tag>/, which is what
+# `creates` checks for.
+- name: Unpack llama.cpp {{ llama_server_release }}
+  ansible.builtin.unarchive:
+    src: "{{ __llama_server_archive_url }}"
+    dest: "{{ __llama_server_opt_dir }}"
+    remote_src: true
+    creates: "{{ __llama_server_release_dir }}/llama-server"
+  become: true
+  become_user: "{{ llama_server_user }}"
+
+- name: Point the llama.cpp link at {{ llama_server_release }}
+  ansible.builtin.file:
+    src: "{{ __llama_server_release_dir | basename }}"
+    dest: "{{ __llama_server_link }}"
+    state: link
+    owner: "{{ llama_server_user }}"
+    group: "{{ llama_server_user }}"
+  become: true
+  notify: Restart llama-server
+
+# A GGUF file is immutable under its name and tens of gigabytes large, so an
+# existing file is the right one — get_url only fetches what is missing.
+- name: Download {{ llama_server_model.file }}
+  ansible.builtin.get_url:
+    url: "{{ __llama_server_hf_url }}/{{ llama_server_model.file }}"
+    dest: "{{ __llama_server_model_path }}"
+    owner: "{{ llama_server_user }}"
+    group: "{{ llama_server_user }}"
+    mode: "0644"
+    timeout: 60
+  become: true
+
+- name: Download the vision projector {{ llama_server_model.mmproj | default('') }}
+  ansible.builtin.get_url:
+    url: "{{ __llama_server_hf_url }}/{{ llama_server_model.mmproj }}"
+    dest: "{{ __llama_server_mmproj_path }}"
+    owner: "{{ llama_server_user }}"
+    group: "{{ llama_server_user }}"
+    mode: "0644"
+    timeout: 60
+  become: true
+  when: __llama_server_mmproj_path | length > 0
+
+- name: Write the llama-server user service
+  ansible.builtin.template:
+    src: llama-server.service.j2
+    dest: "{{ __llama_server_unit_dir }}/llama-server.service"
+    owner: "{{ llama_server_user }}"
+    group: "{{ llama_server_user }}"
+    mode: "0644"
+  become: true
+  notify: Restart llama-server
+
+- name: Enable the llama-server user service
+  ansible.builtin.systemd_service:
+    name: llama-server.service
+    scope: user
+    state: started
+    enabled: true
+    daemon_reload: true
+  become: true
+  become_user: "{{ llama_server_user }}"
+
+# opencode.json belongs to the opencode role. This role hands over its endpoint
+# and lets that role render the file.
+- name: Register the endpoint with opencode
+  ansible.builtin.include_role:
+    name: opencode
+    tasks_from: add_provider
+  vars:
+    opencode_provider:
+      name: llama-server
+      config: "{{ __llama_server_opencode_provider }}"
+  when: llama_server_configure_opencode

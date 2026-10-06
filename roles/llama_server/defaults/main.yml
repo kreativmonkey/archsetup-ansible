@@ -1,0 +1,53 @@
+---
+# defaults file for llama_server
+
+# User the server runs for. It is a user service: binary, models and unit all
+# live in that user's home, no root-owned state besides the Vulkan driver.
+llama_server_user: "{{ system_users[0].name }}"
+
+# llama.cpp release tag from github.com/ggml-org/llama.cpp/releases. Pinned on
+# purpose — the CLI flags keep moving between builds (--no-mmap became
+# --load-mode), so an upgrade is a deliberate bump together with
+# llama_server_args.
+llama_server_release: b11435
+
+# Mesa Vulkan driver of the GPU. vulkan-radeon (RADV) for AMD, vulkan-intel for
+# Intel. On RDNA3.5 iGPUs like the Radeon 890M Vulkan beats ROCm at token
+# generation and needs no HSA_OVERRIDE hacks.
+llama_server_vulkan_driver: vulkan-radeon
+
+# GGUF model from Hugging Face. mmproj is the vision projector and optional.
+# Qwen3.6-35B-A3B is a MoE with ~3B active parameters per token, which is what
+# makes it fast on a bandwidth-bound iGPU; UD-Q4_K_XL is 21 GB.
+llama_server_model:
+  repo: unsloth/Qwen3.6-35B-A3B-GGUF
+  file: Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+  mmproj: mmproj-F16.gguf
+  alias: qwen3.6
+
+# Loopback only: the API has no authentication.
+llama_server_host: 127.0.0.1
+llama_server_port: 8080
+
+# Everything else llama-server gets on its command line.
+# --load-mode none keeps the weights from sitting in RAM twice on unified
+# memory (page cache plus GPU buffer). 128k context costs only ~2.6 GB here,
+# because just 10 of the 40 Qwen3.6 layers are full attention. Sampling is the
+# Qwen recommendation for thinking mode.
+llama_server_args:
+  - --n-gpu-layers 99
+  - --flash-attn on
+  - --load-mode none
+  - --ctx-size 131072
+  - --parallel 1
+  - --jinja
+  - --temp 0.6
+  - --top-p 0.95
+  - --top-k 20
+  - --min-p 0
+
+# Register the endpoint as a provider in opencode.json.
+llama_server_configure_opencode: true
+
+# Stop, uninstall and delete a previous ollama setup (service, packages, models).
+llama_server_remove_ollama: true

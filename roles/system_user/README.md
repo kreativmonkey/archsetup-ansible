@@ -53,16 +53,15 @@ Create a group:
 Put a user into groups — what service roles need:
 
 ```yaml
-- name: Grant GPU access to the ollama service account
+- name: Allow input device access for the dictation user
   ansible.builtin.include_role:
     name: system_user
     tasks_from: add_to_group
   vars:
     system_user_membership:
-      name: ollama
+      name: "{{ whisrs_user }}"
       groups:
-        - render
-        - video
+        - input
 ```
 
 Reserve a subordinate id range for rootless containers:

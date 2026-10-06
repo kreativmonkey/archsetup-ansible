@@ -1,0 +1,33 @@
+---
+# One-way migration off the old ollama role: stop the service, uninstall it
+# with the ROCm stack it pulled in and delete its models. Everything is guarded
+# by what is actually there, so on a clean host this is a no-op.
+
+- name: Look for the ollama unit
+  ansible.builtin.stat:
+    path: /usr/lib/systemd/system/ollama.service
+  register: __llama_server_ollama_unit
+
+- name: Stop and disable ollama
+  ansible.builtin.systemd_service:
+    name: ollama.service
+    state: stopped
+    enabled: false
+  become: true
+  when: __llama_server_ollama_unit.stat.exists
+
+- name: Uninstall ollama and its acceleration stack
+  community.general.pacman:
+    name: "{{ __llama_server_ollama_packages }}"
+    state: absent
+    extra_args: --recursive
+  become: true
+
+- name: Delete the ollama configuration and models
+  ansible.builtin.file:
+    path: "{{ __llama_server_ollama_path }}"
+    state: absent
+  become: true
+  loop_control:
+    loop_var: __llama_server_ollama_path
+  loop: "{{ __llama_server_ollama_paths }}"

@@ -1,0 +1,56 @@
+---
+# vars file for llama_server
+
+__llama_server_home: "/home/{{ llama_server_user }}"
+
+# Each release unpacks into its own directory; the llama.cpp symlink picks the
+# active one, so the unit never changes on an upgrade and a rollback is just
+# the old tag again.
+__llama_server_opt_dir: "{{ __llama_server_home }}/.local/opt"
+__llama_server_release_dir: "{{ __llama_server_opt_dir }}/llama-{{ llama_server_release }}"
+__llama_server_link: "{{ __llama_server_opt_dir }}/llama.cpp"
+__llama_server_archive_url: >-
+  https://github.com/ggml-org/llama.cpp/releases/download/{{ llama_server_release
+  }}/llama-{{ llama_server_release }}-bin-ubuntu-vulkan-x64.tar.gz
+
+# One directory per Hugging Face repo, so model and mmproj of different
+# models cannot collide on generic names like mmproj-F16.gguf.
+__llama_server_model_dir: >-
+  {{ __llama_server_home }}/.local/share/models/{{ llama_server_model.repo | basename }}
+__llama_server_model_path: "{{ __llama_server_model_dir }}/{{ llama_server_model.file }}"
+__llama_server_mmproj_path: >-
+  {{ (__llama_server_model_dir ~ '/' ~ llama_server_model.mmproj)
+     if llama_server_model.mmproj | default('') | length > 0 else '' }}
+__llama_server_hf_url: "https://huggingface.co/{{ llama_server_model.repo }}/resolve/main"
+
+__llama_server_unit_dir: "{{ __llama_server_home }}/.config/systemd/user"
+
+__llama_server_opencode_provider:
+  npm: "@ai-sdk/openai-compatible"
+  name: llama.cpp (local)
+  options:
+    baseURL: "http://localhost:{{ llama_server_port }}/v1"
+    maxOutputTokens: 16384
+  # Built as an expression: a templated YAML key stays a literal string.
+  models: "{{ {llama_server_model.alias: __llama_server_opencode_model} }}"
+__llama_server_opencode_model:
+  name: "{{ llama_server_model.file | regex_replace('\\.gguf$', '') }}"
+  limit:
+    context: 131072
+    output: 16384
+  tool_call: true
+  reasoning: true
+
+# What the old ollama role left behind. -Rs takes the ROCm stack that only
+# ollama-rocm pulled in along with it.
+__llama_server_ollama_packages:
+  - ollama
+  - ollama-rocm
+  - ollama-cuda
+  - ollama-vulkan
+  - rocm-smi-lib
+__llama_server_ollama_paths:
+  - /etc/systemd/system/ollama.service.d
+  - /etc/ollama
+  - /var/lib/ollama
+  - "{{ __llama_server_home }}/.ollama"

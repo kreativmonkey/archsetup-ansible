@@ -69,7 +69,7 @@ roles/                    one role per owned piece of state
 | `direnv` | direnv hooked into fish and bash, plus nix-direnv |
 | `cups` | printing, and the `cups` group membership |
 | `gnome_keyring` | keyring and polkit agent for a niri (Wayland) session |
-| `ollama` | ollama with a GPU acceleration backend |
+| `llama_server` | local LLM with llama.cpp on Vulkan, replaces ollama |
 | `opencode` | language servers and the rendered `opencode.json` |
 | `whisrs` | local voice dictation with a hotkey |
 
@@ -131,14 +131,14 @@ entry points. Reading is free, writing is not.
 Calling one looks like this — never a stray `lineinfile` in the calling role:
 
 ```yaml
-- name: Grant GPU access to the ollama service account
+- name: Allow input device access for the dictation user
   ansible.builtin.include_role:
     name: system_user
     tasks_from: add_to_group
   vars:
     system_user_membership:
-      name: ollama
-      groups: [render, video]
+      name: "{{ whisrs_user }}"
+      groups: [input]
 ```
 
 If a central role cannot do what you need, **extend the central role** — new

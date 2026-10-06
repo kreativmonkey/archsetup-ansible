@@ -2,7 +2,7 @@
 
 Installs the language servers opencode drives and renders
 `~/.config/opencode/opencode.json` — providers, agents, LSP and MCP servers,
-pointed at the local ollama endpoint.
+pointed at the local llama-server endpoint.
 
 **This role owns `opencode.json`.** Other roles add to it through the entry
 points below.

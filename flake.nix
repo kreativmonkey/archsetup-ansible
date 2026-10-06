@@ -23,7 +23,7 @@
             # linting / static checks (also what a CI would run)
             ansible-lint
             yamllint
-            # runtime for helper scripts (update_ollama_jinja.py)
+            # runtime for helper scripts
             python3
             # task runner
             just

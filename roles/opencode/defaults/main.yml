@@ -20,12 +20,12 @@ opencode_permissions:
 
 opencode_plugins: []
 
-opencode_model: "ollama/mistral-small:latest"
-opencode_small_model: "ollama/qwen3-coder:latest"
+opencode_model: "llama-server/qwen3.6"
+opencode_small_model: "llama-server/qwen3.6"
 
 opencode_agents:
   plan:
-    model: "ollama/mistral-small:latest"
+    model: "llama-server/qwen3.6"
     steps: 8
     strategy: "comprehensive"
     instruction: |
@@ -33,13 +33,13 @@ opencode_agents:
       Break down complex tasks into independent sub-tasks suitable for sub-agents.
       Always prioritize token efficiency by summarizing context.
   build:
-    model: "ollama/qwen3-coder:latest"
+    model: "llama-server/qwen3.6"
     instruction: |
       You are a TDD-focused builder.
       Every code change MUST be accompanied by a verification step or test case.
       Prefer composition over inheritance.
   doc:
-    model: "ollama/gemma4:latest"
+    model: "llama-server/qwen3.6"
     instruction: "Write concise, technical documentation in Markdown. Focus on 'Why' rather than 'What'."
 
 opencode_orchestration:
@@ -47,32 +47,9 @@ opencode_orchestration:
   parallel_execution: true
   max_subagents: 3
 
-opencode_providers:
-  ollama:
-    npm: "@ai-sdk/openai-compatible"
-    name: "Ollama (local)"
-    options:
-      baseURL: "http://localhost:11434/v1"
-      maxOutputTokens: 16384
-    models:
-      "qwen3-coder:30b":
-        name: "Qwen 3 Coder (30B)"
-        limit:
-          context: 65536
-          output: 8192
-        tool_call: true
-        reasoning: true
-      "mistral-small:24b":
-        name: "Mistral Small 4 (24B)"
-        limit:
-          context: 32768
-          output: 4096
-        tool_call: true
-      "gemma4:latest":
-        name: "Gemma 4"
-        limit:
-          context: 32768
-          output: 4096
+# Providers declared here. The local model comes from the llama_server role,
+# which registers itself through tasks/add_provider.yml.
+opencode_providers: {}
 
 opencode_lsp:
   yaml:
