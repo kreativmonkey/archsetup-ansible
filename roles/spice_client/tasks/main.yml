@@ -1,0 +1,14 @@
+---
+# tasks file for spice_client
+
+- name: Install the SPICE client
+  community.general.pacman:
+    name: "{{ __spice_client_packages }}"
+    state: present
+  become: true
+
+- name: Configure the SPICE client for the users
+  ansible.builtin.include_tasks: __configure/user.yml
+  loop_control:
+    loop_var: __spice_client_user
+  loop: "{{ spice_client_users }}"

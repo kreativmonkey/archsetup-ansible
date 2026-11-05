@@ -1,0 +1,10 @@
+---
+# defaults file for spice_client
+
+# Users remote-viewer is set up for: the .vv file association plus its
+# settings in ~/.config/virt-viewer.
+spice_client_users: "{{ system_users | map(attribute='name') | list }}"
+
+# Share the clipboard between this machine and the guest. Only works while the
+# guest runs the SPICE vdagent.
+spice_client_share_clipboard: true

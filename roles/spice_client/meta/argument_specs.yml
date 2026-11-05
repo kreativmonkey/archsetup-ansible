@@ -1,0 +1,24 @@
+---
+argument_specs:
+  main:
+    short_description: Install remote-viewer and make it open SPICE .vv files
+    description:
+      - >-
+        Installs virt-viewer and makes remote-viewer the default application
+        for C(application/x-virt-viewer) for the listed users, so a .vv file
+        from the Proxmox console opens straight into a SPICE session.
+    options:
+      spice_client_users:
+        type: list
+        elements: str
+        required: false
+        description:
+          - Users the file association and the viewer settings are set for.
+      spice_client_share_clipboard:
+        type: bool
+        required: false
+        default: true
+        description:
+          - >-
+            Share the clipboard with the guest. Needs the SPICE vdagent
+            running in the guest.

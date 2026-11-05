@@ -1,0 +1,12 @@
+---
+# vars file for spice_client
+
+# virt-viewer ships remote-viewer, the SPICE client that opens the .vv files
+# Proxmox hands out from Console > SPICE.
+__spice_client_packages:
+  - virt-viewer
+
+# MIME type of a .vv file, registered by virt-viewer's shared-mime-info entry,
+# and the desktop entry of remote-viewer that handles it.
+__spice_client_mime_type: application/x-virt-viewer
+__spice_client_desktop_entry: remote-viewer.desktop

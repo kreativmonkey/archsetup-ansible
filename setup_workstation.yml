@@ -135,6 +135,12 @@
       tags:
         - kdeconnect
 
+    - name: Set up the SPICE client
+      ansible.builtin.import_role:
+        name: spice_client
+      tags:
+        - spice_client
+
 # Roles kept out of this playbook on purpose. Enable one by adding an
 # import_role task above:
 #   conky editor headroom obs_studio sshd tuxedo

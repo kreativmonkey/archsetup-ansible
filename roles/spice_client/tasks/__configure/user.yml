@@ -1,0 +1,47 @@
+---
+# remote-viewer as the .vv handler in one user's home. Private: called from
+# main.yml once per entry in spice_client_users, never from outside the role.
+
+- name: Create the config directories of {{ __spice_client_user }}
+  ansible.builtin.file:
+    path: "/home/{{ __spice_client_user }}/.config/{{ __spice_client_dir }}"
+    state: directory
+    owner: "{{ __spice_client_user }}"
+    group: "{{ __spice_client_user }}"
+    mode: "0755"
+  become: true
+  loop_control:
+    loop_var: __spice_client_dir
+  loop:
+    - ""
+    - virt-viewer
+
+# mimeapps.list is shared with xdg-mime, the browsers and every other
+# application that sets a default, so the role owns one key and nothing else.
+- name: Make remote-viewer open .vv files for {{ __spice_client_user }}
+  community.general.ini_file:
+    path: "/home/{{ __spice_client_user }}/.config/mimeapps.list"
+    section: Default Applications
+    option: "{{ __spice_client_mime_type }}"
+    value: "{{ __spice_client_desktop_entry }}"
+    no_extra_spaces: true
+    create: true
+    owner: "{{ __spice_client_user }}"
+    group: "{{ __spice_client_user }}"
+    mode: "0644"
+  become: true
+
+# remote-viewer writes its own per-VM sections (monitor mapping) into the same
+# file, so again a single key instead of a template.
+- name: Set clipboard sharing in remote-viewer for {{ __spice_client_user }}
+  community.general.ini_file:
+    path: "/home/{{ __spice_client_user }}/.config/virt-viewer/settings"
+    section: virt-viewer
+    option: share-clipboard
+    value: "{{ spice_client_share_clipboard | string | lower }}"
+    no_extra_spaces: true
+    create: true
+    owner: "{{ __spice_client_user }}"
+    group: "{{ __spice_client_user }}"
+    mode: "0644"
+  become: true
