@@ -72,6 +72,7 @@ roles/                    one role per owned piece of state
 | `llama_server` | local LLM with llama.cpp on Vulkan, replaces ollama |
 | `opencode` | language servers and the rendered `opencode.json` |
 | `whisrs` | local voice dictation with a hotkey |
+| `kdeconnect` | KDE Connect, opened in the trusted firewalld zones |
 | `spice_client` | remote-viewer as the handler for Proxmox SPICE `.vv` files |
 
 </details>
