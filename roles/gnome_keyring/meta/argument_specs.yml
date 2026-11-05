@@ -35,6 +35,14 @@ argument_specs:
         required: false
         description:
           - Socket path written into environment.d.
+      gnome_keyring_pam_services:
+        type: list
+        elements: str
+        required: false
+        description:
+          - >-
+            Files under /etc/pam.d that get pam_gnome_keyring auth and session
+            lines, so the login keyring unlocks with the login password.
       gnome_keyring_enable_polkit_agent:
         type: bool
         required: false

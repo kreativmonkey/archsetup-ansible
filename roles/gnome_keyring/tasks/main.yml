@@ -7,6 +7,27 @@
     state: present
   become: true
 
+# --- Login keyring unlock via PAM -----------------------------------------
+
+# Appended after the included stacks: auth picks up the password the greeter
+# already collected, session starts the daemon and unlocks the login keyring.
+# The login keyring password must match the login password for this to work.
+- name: Unlock the login keyring at login (pam_gnome_keyring auth)
+  ansible.builtin.lineinfile:
+    path: "/etc/pam.d/{{ item }}"
+    line: "auth       optional     pam_gnome_keyring.so"
+    insertafter: '^auth\s'
+  loop: "{{ gnome_keyring_pam_services }}"
+  become: true
+
+- name: Start the keyring daemon in the session (pam_gnome_keyring session)
+  ansible.builtin.lineinfile:
+    path: "/etc/pam.d/{{ item }}"
+    line: "session    optional     pam_gnome_keyring.so auto_start"
+    insertafter: '^session\s'
+  loop: "{{ gnome_keyring_pam_services }}"
+  become: true
+
 # --- SSH agent integration (OpenSSH ssh-agent, NOT gcr-ssh-agent) ----------
 
 - name: Create the user environment.d directory

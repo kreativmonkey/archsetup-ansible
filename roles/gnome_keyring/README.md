@@ -13,7 +13,7 @@ how you end up with "communication with agent failed".
 | Area | How |
 |------|-----|
 | **Secret Service** (passwords) | Installs `gnome-keyring`; the daemon is socket-activated by the systemd user session and owns `org.freedesktop.secrets`. |
-| **Login keyring unlock** | Handled by `pam_gnome_keyring` via the display manager (GDM ships this by default). Not configured here — see *Notes*. |
+| **Login keyring unlock** | Adds `pam_gnome_keyring` `auth`/`session` lines to each file in `gnome_keyring_pam_services` (default `greetd`), so the login keyring unlocks with the login password. GDM ships this by default. |
 | **SSH agent** | Uses **OpenSSH's own** `ssh-agent.socket` (user unit) and exports `SSH_AUTH_SOCK` via `~/.config/environment.d`; `gcr-ssh-agent.socket` is disabled. gcr-ssh-agent busy-loops `ssh-add` at 100% CPU on passphrase-protected keys under a non-GNOME (niri) session — there is no passphrase prompter — which hangs SSH (e.g. Vorta/borg). Passphrases are entered per agent lifetime via `ssh-add`, not stored in the keyring. |
 | **Polkit prompts** | Installs `polkit-gnome` and runs its authentication agent as a systemd user service bound to `graphical-session.target` — no changes to your niri `config.kdl`. |
 | **Tooling** | Installs `libsecret` (`secret-tool`) and `seahorse` (GUI). |
@@ -53,7 +53,11 @@ how you end up with "communication with agent failed".
   passphrase prompter, so gcr tries to unlock passphrase-protected keys on demand
   via `ssh-add`, which then busy-loops at ~100% CPU and hangs the SSH connection.
   OpenSSH's plain agent has no such on-demand-unlock behaviour.
-- **PAM / login keyring:** with GDM the login keyring is unlocked automatically.
-  If you switch to a display manager / greeter without `pam_gnome_keyring` (e.g.
-  greetd + tuigreet), you must add the `pam_gnome_keyring.so` `auth`/`session`
-  lines to the relevant PAM stack — intentionally left out of this role.
+- **PAM / login keyring:** the login keyring password must equal the login
+  password, otherwise `pam_gnome_keyring` cannot unlock it and the prompt stays.
+  The lines go after the included stacks; a pacman update of `greetd` that
+  replaces `/etc/pam.d/greetd` (`.pacnew`) needs another run of this role.
+- **SSH key passphrases from the keyring:** the OpenSSH agent itself never reads
+  the keyring. An `SSH_ASKPASS` helper that runs `secret-tool lookup` lets
+  `ssh-add` at login load keys without a prompt, once the passphrase is stored
+  with `secret-tool store`. That keeps gcr-ssh-agent out of the picture.
