@@ -1,0 +1,22 @@
+---
+# tasks file for kdeconnect
+
+- name: Install KDE Connect
+  community.general.pacman:
+    name: "{{ kdeconnect_packages }}"
+    state: present
+  become: true
+
+# The firewall belongs to the firewalld role, so the ports are opened through
+# its entry point instead of here.
+- name: Allow KDE Connect in zone {{ kdeconnect_zone }}
+  ansible.builtin.include_role:
+    name: firewalld
+    tasks_from: add_service
+  loop_control:
+    loop_var: kdeconnect_zone
+  loop: "{{ kdeconnect_firewall_zones }}"
+  vars:
+    firewalld_service:
+      name: kdeconnect
+      zone: "{{ kdeconnect_zone }}"

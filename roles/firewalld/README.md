@@ -139,3 +139,19 @@ Narrower profile, chosen from the inventory:
 ```yaml
 firewalld_ipv6_rpfilter: strict-forward
 ```
+
+## Entry point `add_service`
+
+Other roles open a predefined service through this entry point instead of
+calling `firewall-cmd` themselves:
+
+```yaml
+- name: Allow KDE Connect in the home zone
+  ansible.builtin.include_role:
+    name: firewalld
+    tasks_from: add_service
+  vars:
+    firewalld_service:
+      name: kdeconnect
+      zone: home
+```
