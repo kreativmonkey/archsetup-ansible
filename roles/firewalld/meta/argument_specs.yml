@@ -8,8 +8,8 @@ argument_specs:
         in firewalld.conf so it survives the policy routing rules a
         WireGuard-style VPN client installs.
       - >-
-        Not a general firewall role: it manages no zones, no services and no
-        ports.
+        Manages no zones or ports itself. Other roles open predefined
+        services through the add_service entry point.
     options:
       firewalld_conf:
         type: str
@@ -49,3 +49,33 @@ argument_specs:
           - >-
             Destination of the optional connectivity probe. Only runs with
             C(--tags firewalld_connectivity) and never fails the play.
+  add_service:
+    short_description: Enable or disable a predefined service in a zone
+    description:
+      - >-
+        Entry point for other roles. Never call firewall-cmd or
+        ansible.posix.firewalld outside this role.
+      - Applied permanently and to the running firewall in one step.
+    options:
+      firewalld_service:
+        type: dict
+        required: true
+        description:
+          - The service to set.
+        options:
+          name:
+            type: str
+            required: true
+            description: >-
+              Service name as listed by C(firewall-cmd --get-services), for
+              example C(kdeconnect).
+          zone:
+            type: str
+            required: true
+            description: Zone to change, for example C(home).
+          state:
+            type: str
+            required: false
+            default: enabled
+            choices: [enabled, disabled]
+            description: Whether the service should be allowed.

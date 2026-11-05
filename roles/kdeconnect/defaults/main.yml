@@ -1,0 +1,13 @@
+---
+# defaults file for kdeconnect
+
+# kdeconnect ships the daemon (kdeconnectd, started via XDG autostart) and the
+# CLI; sshfs is its optional dependency for browsing the phone's files.
+kdeconnect_packages:
+  - kdeconnect
+  - sshfs
+
+# firewalld zones the phone connects through. Only trusted networks: the
+# kdeconnect service opens 1714-1764 tcp/udp for pairing and discovery.
+kdeconnect_firewall_zones:
+  - home

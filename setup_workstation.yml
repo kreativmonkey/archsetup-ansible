@@ -128,6 +128,13 @@
       tags:
         - whisrs
 
+    # After firewalld: the role opens its ports through that role.
+    - name: Set up KDE Connect
+      ansible.builtin.import_role:
+        name: kdeconnect
+      tags:
+        - kdeconnect
+
 # Roles kept out of this playbook on purpose. Enable one by adding an
 # import_role task above:
 #   conky editor headroom obs_studio sshd tuxedo

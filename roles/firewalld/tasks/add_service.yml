@@ -1,0 +1,12 @@
+---
+# Entry point for other roles: open (or close) a predefined firewalld service
+# in one zone. Written permanently and to the running config in one step, so no
+# reload is needed.
+- name: Set the firewalld service {{ firewalld_service.name ~ " in zone " ~ firewalld_service.zone }}
+  ansible.posix.firewalld:
+    service: "{{ firewalld_service.name }}"
+    zone: "{{ firewalld_service.zone }}"
+    state: "{{ firewalld_service.state | default('enabled') }}"
+    permanent: true
+    immediate: true
+  become: true

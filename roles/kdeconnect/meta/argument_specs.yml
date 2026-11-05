@@ -1,0 +1,26 @@
+---
+argument_specs:
+  main:
+    short_description: Install KDE Connect and open it in trusted firewall zones
+    description:
+      - >-
+        Installs KDE Connect and allows the predefined firewalld service
+        C(kdeconnect) in each listed zone through the firewalld role.
+      - >-
+        The daemon is started by the package's XDG autostart entry, so no
+        service is managed here. Pairing happens on the phone.
+    options:
+      kdeconnect_packages:
+        type: list
+        elements: str
+        required: false
+        description:
+          - Packages to install.
+      kdeconnect_firewall_zones:
+        type: list
+        elements: str
+        required: false
+        description:
+          - >-
+            firewalld zones that get the C(kdeconnect) service. Keep this to
+            trusted networks.
