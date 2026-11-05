@@ -27,3 +27,9 @@ gnome_keyring_ssh_auth_sock: "${XDG_RUNTIME_DIR}/ssh-agent.socket"
 # privilege-escalation prompts (mounting drives, GParted, ...) appear.
 gnome_keyring_enable_polkit_agent: true
 gnome_keyring_polkit_agent_exec: /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+
+# PAM services that get pam_gnome_keyring, so the login keyring is unlocked with
+# the login password (like GDM does out of the box). greetd ships without it.
+# Empty list leaves PAM alone.
+gnome_keyring_pam_services:
+  - greetd
