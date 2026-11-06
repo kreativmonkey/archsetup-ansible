@@ -2,7 +2,8 @@
 
 Runs a local LLM with llama.cpp's `llama-server` on the GPU through Vulkan, as a
 systemd user service with an OpenAI-compatible API and a web UI on
-`http://localhost:8080`. Default model is Qwen3.6-35B-A3B.
+`http://localhost:8080`. Default model is Qwen3.6-35B-A3B with image input
+(vision projector) and speculative decoding through its built-in MTP head.
 
 Replaces the former `ollama` role and removes what that one left behind.
 
@@ -14,7 +15,7 @@ Replaces the former `ollama` role and removes what that one left behind.
     name: llama_server
   vars:
     llama_server_model:
-      repo: unsloth/Qwen3.6-35B-A3B-GGUF
+      repo: unsloth/Qwen3.6-35B-A3B-MTP-GGUF
       file: Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
       mmproj: mmproj-F16.gguf
       alias: qwen3.6
@@ -34,9 +35,18 @@ Replaces the former `ollama` role and removes what that one left behind.
   (`--no-mmap` became `--load-mode none`), and an unknown flag is a hard start
   failure. Bump `llama_server_release` and check `llama-server --help` against
   `llama_server_args` in one go.
+- **Speculative decoding is MTP.** `--spec-type draft-mtp` needs a GGUF that
+  still carries the MTP head (`<arch>.nextn_predict_layers` in the metadata) —
+  the `-MTP-GGUF` repos do, the plain ones don't, and llama-server then fails
+  to start. A model without one: drop both `--spec-*` lines from
+  `llama_server_args`. Measured on the 890M: 27–33 t/s instead of 22, with
+  images in the same request.
+- **Images.** With `mmproj` set, the API takes `image_url` parts and opencode
+  gets the model registered with image attachments.
 - **iGPU memory is the GTT limit**, half the RAM by default (~31 GB with
   64 GB). Model plus KV cache have to fit into that.
-- **The downloads are big.** The model is 21 GB; `get_url` fetches it only when
-  the file is missing, so check free disk space before changing the model.
+- **The downloads are big.** The model is 23 GB; `get_url` fetches it only when
+  the file is missing, so check free disk space before changing the model. The old model's directory
+  under `~/.local/share/models/` is not removed automatically.
 - **The ollama removal is one-way** (`llama_server_remove_ollama`): service,
   packages with their ROCm dependencies, `/var/lib/ollama` and `~/.ollama`.

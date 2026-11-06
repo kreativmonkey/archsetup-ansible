@@ -18,9 +18,11 @@ llama_server_vulkan_driver: vulkan-radeon
 
 # GGUF model from Hugging Face. mmproj is the vision projector and optional.
 # Qwen3.6-35B-A3B is a MoE with ~3B active parameters per token, which is what
-# makes it fast on a bandwidth-bound iGPU; UD-Q4_K_XL is 21 GB.
+# makes it fast on a bandwidth-bound iGPU; UD-Q4_K_XL is 23 GB. The -MTP repo
+# keeps the multi-token-prediction head that the plain GGUFs strip — without
+# it --spec-type draft-mtp below has nothing to draft with.
 llama_server_model:
-  repo: unsloth/Qwen3.6-35B-A3B-GGUF
+  repo: unsloth/Qwen3.6-35B-A3B-MTP-GGUF
   file: Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
   mmproj: mmproj-F16.gguf
   alias: qwen3.6
@@ -34,6 +36,11 @@ llama_server_port: 8080
 # memory (page cache plus GPU buffer). 128k context costs only ~2.6 GB here,
 # because just 10 of the 40 Qwen3.6 layers are full attention. Sampling is the
 # Qwen recommendation for thinking mode.
+# Speculative decoding uses the model's own MTP head instead of a separate draft
+# model (a small Qwen3 would not even share the Qwen3.6 vocabulary). Measured on
+# the 890M: 27-33 t/s instead of 22, 58-82 % of the drafts accepted, image
+# input still works. Two drafted tokens is Unsloth's recommendation; MTP needs
+# --parallel 1.
 llama_server_args:
   - --n-gpu-layers 99
   - --flash-attn on
@@ -45,6 +52,8 @@ llama_server_args:
   - --top-p 0.95
   - --top-k 20
   - --min-p 0
+  - --spec-type draft-mtp
+  - --spec-draft-n-max 2
 
 # Register the endpoint as a provider in opencode.json.
 llama_server_configure_opencode: true

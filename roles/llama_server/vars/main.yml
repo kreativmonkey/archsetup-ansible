@@ -40,6 +40,11 @@ __llama_server_opencode_model:
     output: 16384
   tool_call: true
   reasoning: true
+  # opencode only offers image attachments to a model that declares them.
+  attachment: "{{ __llama_server_mmproj_path | length > 0 }}"
+  modalities:
+    input: "{{ ['text', 'image'] if __llama_server_mmproj_path | length > 0 else ['text'] }}"
+    output: [text]
 
 # What the old ollama role left behind. -Rs takes the ROCm stack that only
 # ollama-rocm pulled in along with it.
